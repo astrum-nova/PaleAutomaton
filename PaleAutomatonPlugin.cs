@@ -48,6 +48,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Destroy(songKnightBossScene.transform.GetChild(1).gameObject);
         songKnight = songKnightBossScene.transform.GetChild(2).gameObject;
         controlFsm = songKnight.LocateMyFSM("Control");
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dash Slash 3")!.minValue = -1000;
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dash Slash 3")!.maxValue = 1000;
+        Destroy(songKnight.LocateMyFSM("Stun Control"));
+        Destroy(songKnight.LocateMyFSM("FSM"));
     }
     private static IEnumerator PlaceHornet()
     {
