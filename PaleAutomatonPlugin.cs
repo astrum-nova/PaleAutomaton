@@ -30,10 +30,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             StartCoroutine(PlaceHornet());
             var quest = GameObject.Find("Merchant Quest Parent")!;
             if (quest.transform.GetChild(0).gameObject.activeSelf) return; //! REMEMBER TO PLAYTEST THIS
-            quest.transform.GetChild(1).gameObject.SetActive(false);
-            foreach (var rootGameObject in scene.GetRootGameObjects()) if (rootGameObject.name.StartsWith("Citadel Bat")) rootGameObject.SetActive(false);
-            GameObject.Find("citadel_bat_swarms")!.SetActive(false);
-            GameObject.Find("bat swarm_bg_left")!.SetActive(false);
+            quest.SetActive(false);
+            foreach (var rootGameObject in scene.GetRootGameObjects()) if (rootGameObject.name.StartsWith("Alert Range")) Destroy(rootGameObject);
+            Destroy(GameObject.Find("citadel_bat_swarms"));
+            Destroy(GameObject.Find("bat swarm_bg_left")!);
             StartCoroutine(SpawnSongKnight());
             PlayerData.instance.encounteredSongChevalierBoss = true;
         };
