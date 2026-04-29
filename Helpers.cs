@@ -39,4 +39,11 @@ public static class Helpers
             s.Actions = [];
         }
     }
+    public static void RemoveEventFromState(string stateName, string eventName)
+    {
+        var state = PaleAutomatonPlugin.controlFsm.FsmStates.FirstOrDefault(state => state.Name == stateName)!;
+        state.Transitions = state.Transitions
+            .Where(t => t.EventName != eventName)
+            .ToArray();
+    }
 }

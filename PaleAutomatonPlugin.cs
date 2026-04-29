@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using BepInEx;
 using HarmonyLib;
@@ -13,12 +14,15 @@ namespace PaleAutomaton;
 [BepInAutoPlugin(id: "io.github.astrum-nova.paleautomaton")]
 public partial class PaleAutomatonPlugin : BaseUnityPlugin
 {
+    private static WaitForSeconds _waitForSeconds0_01 = new WaitForSeconds(0.01f);
+
     public static PaleAutomatonPlugin Instance { get; private set; } = null!;
     public static ManagedAsset<GameObject> SK_ASSET = null!;
     public static GameObject songKnightBossScene = null!;
     public static GameObject songKnight = null!;
     public static GameObject projectile = null!;
     public static PlayMakerFSM controlFsm = null!;
+    public static HealthManager healthManager;
     private void Awake()
     {
         Instance = this;
@@ -45,7 +49,18 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         yield return new WaitForSeconds(0.6f);
         GameCameras.instance.cameraFadeFSM.SetState("Scene Fade In");
         HeroController.instance.transform.position = new Vector3(46.8476f, 25.5938f, 0.004f);
+        yield return FancyZoomOut();
     }
+    private static IEnumerator FancyZoomOut()
+    {
+        HeroController.instance.vignette.enabled = false;
+        for (var i = 0; i < 400; i++)
+        {
+            yield return _waitForSeconds0_01;
+            GameCameras.instance.tk2dCam.ZoomFactor *= 0.999f;
+        }
+    }
+
     private static IEnumerator SpawnSongKnight()
     {
         yield return SK_ASSET.Load();
@@ -54,15 +69,27 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Destroy(songKnightBossScene.transform.GetChild(0).gameObject);
         Destroy(songKnightBossScene.transform.GetChild(1).gameObject);
         songKnight = songKnightBossScene.transform.GetChild(2).gameObject;
-        controlFsm = songKnight.LocateMyFSM("Control");
+        healthManager = songKnight.GetComponent<HealthManager>();
+        healthManager.recoil = null;
         Destroy(songKnight.LocateMyFSM("Stun Control"));
-        Destroy(songKnight.LocateMyFSM("FSM"));
+        controlFsm = songKnight.LocateMyFSM("Control");
         controlFsm.GetFirstActionOfType<FloatClamp>("Dash Slash 3")!.minValue = -1000;
         controlFsm.GetFirstActionOfType<FloatClamp>("Dash Slash 3")!.maxValue = 1000;
+        var saveHeroFsm = songKnight.LocateMyFSM("Save Hero");
+        saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.minValue = -1000;
+        saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.maxValue = 1000;
+        var mainFsm = songKnight.LocateMyFSM("FSM");
+        mainFsm.GetState("Catch")!.InsertLambdaMethod(_ => { if (HeroController.instance.transform.position.x < songKnight.transform.position.x) mainFsm.GetFirstActionOfType<AnimatePositionTo>("Catch")!.toValue.value.x *= -1; }, 3);
+        Destroy(songKnight.GetComponent<DamageHero>());
         SetupPaleAutomaton();
     }
     private static void SetupPaleAutomaton()
     {
+        Helpers.RemoveEventFromState("Target Check", "NEEDOLIN");
+        Helpers.RemoveEventFromState("Rising Slash Followup", "FALL");
+        Helpers.RemoveEventFromState("Rising Slash Followup", "STEP");
+        Helpers.RemoveEventFromState("WJ Cross Slash", "CANCEL");
+        Helpers.RemoveEventFromState("Jump Rise", "LAND");
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f;
         controlFsm.GetFirstActionOfType<SetVelocityAsAngle>("Dive")!.speed = 120f;
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -100f;
@@ -77,7 +104,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetLastActionOfType<FaceObjectV2>("Dive Dir")!.pauseBetweenTurns = 0f;
         controlFsm.GetLastActionOfType<Wait>("CS Antic")!.time = 0.25f;
         controlFsm.GetState("Rising Slash Antic")!.AddAction(new Wait { time = 0.6f, finishEvent = FsmEvent.Finished, realTime = false });
-        controlFsm.GetState("Rising Slash Antic")!.AddLambdaMethod(_ => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f);
+        controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f;
+        controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 15;
         controlFsm.GetState("Dive Antic")!.AddAction(new Wait { time = 0.3f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("WindSlash Antic")!.AddAction(new Wait { time = 0.4f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("DashStab Antic")!.AddAction(new Wait { time = 0.5f, finishEvent = FsmEvent.Finished, realTime = false });
