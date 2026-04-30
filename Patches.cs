@@ -1,6 +1,9 @@
-﻿using HarmonyLib;
+﻿using System;
+using GlobalEnums;
+using HarmonyLib;
 using HutongGames.PlayMaker.Actions;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace PaleAutomaton;
 
@@ -21,6 +24,7 @@ public static class Patches
     [HarmonyPostfix]
     private static void SpawnObjectFromGlobalPool_OnEnter_Postfix(SpawnObjectFromGlobalPool __instance)
     {
+        if (!PaleAutomatonPlugin.bossScene) return;
         if (!PaleAutomatonPlugin.controlFsm) return;
         if (!__instance.storeObject.Value) return;
         var go = __instance.storeObject.Value;
@@ -32,11 +36,24 @@ public static class Patches
             Helpers.MakeProjectileRenderAboveWalls(__instance.storeObject.Value);
         } else if (spawned.name.StartsWith("Song Knight Projectile"))
         {
-            spawned.localScale = new Vector3(2.25f, 2.20f, 1.00f);
-            __instance.storeObject.Value.GetComponent<Collider2D>().isTrigger = true;
-            Helpers.MakeProjectileIgnoreEnvironment(__instance.storeObject.Value);
-            Helpers.RemoveProjectileWallEvents(__instance.storeObject.Value);
-            Helpers.MakeProjectileRenderAboveWalls(__instance.storeObject.Value);
+            Object.Destroy(go);
+            PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.SpawnWindSlash());
         }
+    }
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(GameManager), nameof(GameManager.FreezeMoment), typeof(FreezeMomentTypes), typeof(Action))]
+    private static bool GameManager_FreezeMoment(GameManager __instance, FreezeMomentTypes type, Action onFinish)
+    {
+        return type != FreezeMomentTypes.NailClashEffect;
+    }
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(HealthManager), nameof(HealthManager.Hit))]
+    private static void HealthManager_Hit(HealthManager __instance, ref HitInstance hitInstance)
+    {
+        if (!PaleAutomatonPlugin.bossScene) return;
+        if (!StateData.IsInParryableState()) return;
+        hitInstance.DamageDealt = 0;
+        PaleAutomatonPlugin.Instance.StartCoroutine(PaleAutomatonPlugin.damageHero.NailClash(0, "Nail Attack", PaleAutomatonPlugin.songKnight.transform.position));
+        GameManager.instance.FreezeMoment(FreezeMomentTypes.NailClashEffect);
     }
 }

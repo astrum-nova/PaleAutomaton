@@ -14,8 +14,10 @@ namespace PaleAutomaton;
 [BepInAutoPlugin(id: "io.github.astrum-nova.paleautomaton")]
 public partial class PaleAutomatonPlugin : BaseUnityPlugin
 {
-    private static WaitForSeconds _waitForSeconds0_01 = new WaitForSeconds(0.01f);
+    //* Cached WaitForSeconds
+    private static WaitForSeconds _waitForSeconds0_005 = new(0.005f);
 
+    //* Boss References
     public static PaleAutomatonPlugin Instance { get; private set; } = null!;
     public static ManagedAsset<GameObject> SK_ASSET = null!;
     public static GameObject songKnightBossScene = null!;
@@ -23,6 +25,12 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static GameObject projectile = null!;
     public static PlayMakerFSM controlFsm = null!;
     public static HealthManager healthManager;
+    public static DamageHero damageHero;
+    public static GameObject projectilePoint;
+    
+    //* Flags
+    public static bool bossScene = false;
+    public static bool windslashGround = false;
     private void Awake()
     {
         Instance = this;
@@ -30,8 +38,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(Patches));
         SceneManager.sceneLoaded += (scene, _) =>
         {
+            bossScene = false;
             if (!GameManager.instance.IsGameplayScene()) return;
             if (scene.name != "Arborium_11") return;
+            bossScene = true;
             StartCoroutine(PlaceHornet());
             var quest = GameObject.Find("Merchant Quest Parent")!;
             if (quest.transform.GetChild(0).gameObject.activeSelf) return; //! REMEMBER TO PLAYTEST THIS
@@ -41,8 +51,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             Destroy(GameObject.Find("bat swarm_bg_left")!);
             StartCoroutine(SpawnSongKnight());
             PlayerData.instance.encounteredSongChevalierBoss = true;
+            Pools.Clear();
         };
         SK_ASSET = ManagedAsset<GameObject>.FromSceneAsset("hang_17b", "Boss Scene - To Additive Load");
+        CustomBehaviour.SK_PROJECTILE_ASSET = ManagedAsset<GameObject>.FromNonSceneAsset("Assets/Prefabs/Hornet Enemies/Song Knight Projectile.prefab", "localpoolprefabs_assets_areahangareasong");
     }
     private static IEnumerator PlaceHornet()
     {
@@ -56,11 +68,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         HeroController.instance.vignette.enabled = false;
         for (var i = 0; i < 400; i++)
         {
-            yield return _waitForSeconds0_01;
+            yield return _waitForSeconds0_005;
             GameCameras.instance.tk2dCam.ZoomFactor *= 0.999f;
         }
     }
-
     private static IEnumerator SpawnSongKnight()
     {
         yield return SK_ASSET.Load();
@@ -69,6 +80,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Destroy(songKnightBossScene.transform.GetChild(0).gameObject);
         Destroy(songKnightBossScene.transform.GetChild(1).gameObject);
         songKnight = songKnightBossScene.transform.GetChild(2).gameObject;
+        projectilePoint = songKnight.transform.Find("Projectile Point").gameObject;
         healthManager = songKnight.GetComponent<HealthManager>();
         healthManager.recoil = null;
         Destroy(songKnight.LocateMyFSM("Stun Control"));
@@ -80,7 +92,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.maxValue = 1000;
         var mainFsm = songKnight.LocateMyFSM("FSM");
         mainFsm.GetState("Catch")!.InsertLambdaMethod(_ => { if (HeroController.instance.transform.position.x < songKnight.transform.position.x) mainFsm.GetFirstActionOfType<AnimatePositionTo>("Catch")!.toValue.value.x *= -1; }, 3);
-        Destroy(songKnight.GetComponent<DamageHero>());
+        damageHero = songKnight.GetComponent<DamageHero>();
+        damageHero.enabled = false;
         SetupPaleAutomaton();
     }
     private static void SetupPaleAutomaton()
@@ -92,11 +105,14 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Helpers.RemoveEventFromState("Jump Rise", "LAND");
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f;
         controlFsm.GetFirstActionOfType<SetVelocityAsAngle>("Dive")!.speed = 120f;
+        controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.decelerationX = 0.925f;
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -100f;
-        controlFsm.GetFirstActionOfType<SetFloatValue>("Windslash G")!.floatValue = -70f;
-        controlFsm.GetFirstActionOfType<SetVelocity2d>("Windslash G")!.y = 40f;
-        controlFsm.GetFirstActionOfType<SetFloatValue>("Windslash A")!.floatValue = -70f;
-        controlFsm.GetLastActionOfType<SetFloatValue>("Windslash A")!.floatValue = -40f;
+
+        controlFsm.GetState("WindSlash Antic")!.AddLambdaMethod(_ =>
+        {
+            windslashGround = controlFsm.Fsm.previousActiveState.name.EndsWith('G');
+        });
+        
         controlFsm.GetLastActionOfType<SetVelocityByScale>("CrossSlash Recoil")!.speed = 15f;
         controlFsm.GetFirstActionOfType<Wait>("Idle")!.time = -1f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.floatVariable = 0f;
