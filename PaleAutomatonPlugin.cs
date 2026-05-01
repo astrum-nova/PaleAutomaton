@@ -26,8 +26,12 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static DamageHero damageHero = null!;
     
     //* Flags
+    public static int INITIAL_HP = 1800;
+    public static int PHASE_2_THRESHOLD = 1500;
     public static bool PHASE_2 = false;
+    public static int PHASE_3_THRESHOLD = 1000;
     public static bool PHASE_3 = false;
+    public static int PHASE_4_THRESHOLD = 1000;
     public static bool PHASE_4 = false;
     public static bool bossScene;
     public static bool windslashGround;
@@ -133,16 +137,9 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         mainFsm.GetState("Catch")!.InsertLambdaMethod(_ => { if (HeroController.instance.transform.position.x < songKnight.transform.position.x) mainFsm.GetFirstActionOfType<AnimatePositionTo>("Catch")!.toValue.value.x *= -1; }, 3);
         damageHero = songKnight.GetComponent<DamageHero>();
         damageHero.enabled = false;
-
         var mainHitbox = songKnight.transform.Find("ComboSlash 1").gameObject.GetComponent<PolygonCollider2D>().points!;
-        foreach (var hitbox in new[]
-                 {
-                     "DashStab Hit 1",
-                     "DashStab Hit 2",
-                     "ComboSlash 2",
-                 })
-            songKnight.transform.Find(hitbox).gameObject.GetComponent<PolygonCollider2D>().SetPath(0, mainHitbox);
-        
+        foreach (var damageHeroComponent in songKnight.GetComponentsInChildren<DamageHero>(true)) damageHeroComponent.SetDamageAmount(2);
+        foreach (var hitbox in new[] {"DashStab Hit 1", "DashStab Hit 2", "ComboSlash 2"}) songKnight.transform.Find(hitbox).gameObject.GetComponent<PolygonCollider2D>().SetPath(0, mainHitbox);
         SetupPaleAutomaton();
     }
     private static void SetupPaleAutomaton()
@@ -152,6 +149,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Helpers.RemoveEventFromState("Rising Slash Followup", "STEP");
         Helpers.RemoveEventFromState("WJ Cross Slash", "CANCEL");
         Helpers.RemoveEventFromState("Jump Rise", "LAND");
+        Helpers.RemoveEventFromState("Become Active", "BLOCKED HIT");
         controlFsm.GetState("Enc Wake")!.AddLambdaMethod(_ =>
         {
             Instance.StartCoroutine(DisplayBigTitle());
@@ -167,6 +165,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetFirstActionOfType<Wait>("Idle")!.time = -1f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.floatVariable = 0f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.falseValue = 0f;
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.maxValue = 255;
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dive R")!.minValue = 285f;
         controlFsm.GetLastActionOfType<FaceObjectV2>("Dive Dir")!.pauseBetweenTurns = 0f;
         controlFsm.GetLastActionOfType<Wait>("CS Antic")!.time = 0.25f;
         controlFsm.GetState("Rising Slash Antic")!.AddAction(new Wait { time = 0.6f, finishEvent = FsmEvent.Finished, realTime = false });
@@ -177,6 +177,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("WindSlash Antic")!.AddAction(new Wait { time = 0.4f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("DashStab Antic")!.AddAction(new Wait { time = 0.5f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("DashStab Dash")!.AddAction(new Wait { time = 0.02f, finishEvent = FsmEvent.Finished, realTime = false });
+        controlFsm.GetState("CrossSlash 1")!.AddLambdaMethod(_ => HeroController.instance.StartInvulnerable(0.1f));
+        controlFsm.GetState("Rising Slash")!.AddLambdaMethod(_ => HeroController.instance.StartInvulnerable(0.1f));
         controlFsm.GetState("Stab 1")!.AddLambdaMethod(_ =>
         {
             controlFsm.StartCoroutine(Helpers.DelayedTurnAround(0.15f));
@@ -190,5 +192,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
                 else dashStabbedOnce = true;
             }
         });
+        controlFsm.GetState("Idle")!.AddLambdaMethod(_ => { Debug.Log("IDLE STATE");});
     }
 }

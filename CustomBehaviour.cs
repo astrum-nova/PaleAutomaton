@@ -19,6 +19,7 @@ public static class CustomBehaviour
             Helpers.RemoveProjectileWallEvents(skProjectileSetup);
             Helpers.MakeProjectileRenderAboveWalls(skProjectileSetup);
             skProjectileSetup.AddComponent<ProjectileMover>();
+            skProjectileSetup.GetComponent<DamageHero>().SetDamageAmount(2);
             skProjectileSetup.SetActive(false);
             skProjectileSetup.transform.position = new Vector3(0, -1000, 0);
             skProjectileSetup.name = "WindSlash";

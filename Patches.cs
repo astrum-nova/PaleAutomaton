@@ -63,4 +63,14 @@ public static class Patches
             PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.AnticParry());
         }
     }
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.NailClash))]
+    private static void DamageHero_NailClash(DamageHero __instance)
+    {
+        if (!PaleAutomatonPlugin.bossScene) return;
+        HeroController.instance.AddSilkParts(1, false);
+        PaleAutomatonPlugin.healthManager.SpriteFlash.flashArmoured();
+        if (PaleAutomatonPlugin.healthManager.hp - PlayerData.instance.nailDamage / 2 > 1) PaleAutomatonPlugin.healthManager.hp -= PlayerData.instance.nailDamage / 2;
+        else PaleAutomatonPlugin.healthManager.hp = 1;
+    }
 }
