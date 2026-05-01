@@ -6,6 +6,7 @@ using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
+using TMProOld;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -20,6 +21,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     //* Boss References
     public static PaleAutomatonPlugin Instance { get; private set; } = null!;
     public static ManagedAsset<GameObject> SK_ASSET = null!;
+    public static ManagedAsset<GameObject> BIG_TITLE = null!;
     public static GameObject songKnightBossScene = null!;
     public static GameObject songKnight = null!;
     public static GameObject projectile = null!;
@@ -39,6 +41,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         SceneManager.sceneLoaded += (scene, _) =>
         {
             bossScene = false;
+            GameCameras.instance.tk2dCam.ZoomFactor = 1;
             if (!GameManager.instance.IsGameplayScene()) return;
             if (scene.name != "Arborium_11") return;
             bossScene = true;
@@ -46,7 +49,15 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             var quest = GameObject.Find("Merchant Quest Parent")!;
             if (quest.transform.GetChild(0).gameObject.activeSelf) return; //! REMEMBER TO PLAYTEST THIS
             quest.SetActive(false);
-            foreach (var rootGameObject in scene.GetRootGameObjects()) if (rootGameObject.name.StartsWith("Alert Range")) Destroy(rootGameObject);
+            foreach (var rootGameObject in scene.GetRootGameObjects())
+            {
+                if (rootGameObject.name.StartsWith("Alert Range")) Destroy(rootGameObject);
+                if (rootGameObject.name.StartsWith("Hero Corpse Marker"))
+                {
+                    if (rootGameObject.name.EndsWith("(10)")) rootGameObject.transform.position = rootGameObject.transform.position with { x = 129 };
+                    else Destroy(rootGameObject);
+                }
+            }
             Destroy(GameObject.Find("citadel_bat_swarms"));
             Destroy(GameObject.Find("bat swarm_bg_left")!);
             StartCoroutine(SpawnSongKnight());
@@ -54,23 +65,48 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             Pools.Clear();
         };
         SK_ASSET = ManagedAsset<GameObject>.FromSceneAsset("hang_17b", "Boss Scene - To Additive Load");
+        BIG_TITLE = ManagedAsset<GameObject>.FromSceneAsset("cradle_03", "Boss Scene/Boss Title");
         CustomBehaviour.SK_PROJECTILE_ASSET = ManagedAsset<GameObject>.FromNonSceneAsset("Assets/Prefabs/Hornet Enemies/Song Knight Projectile.prefab", "localpoolprefabs_assets_areahangareasong");
     }
     private static IEnumerator PlaceHornet()
     {
-        yield return new WaitForSeconds(0.6f);
-        GameCameras.instance.cameraFadeFSM.SetState("Scene Fade In");
+        yield return new WaitForSeconds(0.3475f);
         HeroController.instance.transform.position = new Vector3(46.8476f, 25.5938f, 0.004f);
-        yield return FancyZoomOut();
-    }
-    private static IEnumerator FancyZoomOut()
-    {
         HeroController.instance.vignette.enabled = false;
-        for (var i = 0; i < 400; i++)
+    }
+    private static IEnumerator FancyZoomOut(float duration, float targetZoom)
+    {
+        var elapsed = 0f;
+        var startZoom = GameCameras.instance.tk2dCam.ZoomFactor;
+        while (elapsed < duration)
         {
-            yield return _waitForSeconds0_005;
-            GameCameras.instance.tk2dCam.ZoomFactor *= 0.999f;
+            elapsed += Time.deltaTime;
+            var t = Mathf.Clamp01(elapsed / duration);
+            var easeInOut = t < 0.5 ? 4 * t * t * t : 1 - Mathf.Pow(-2 * t + 2, 3) / 2;
+            GameCameras.instance.tk2dCam.ZoomFactor = Mathf.Lerp(startZoom, targetZoom, easeInOut);
+            yield return null;
         }
+        GameCameras.instance.tk2dCam.ZoomFactor = targetZoom;
+    }
+    private static IEnumerator DisplayBigTitle()
+    {
+        yield return BIG_TITLE.Load();
+        var bigTitle = BIG_TITLE.InstantiateAsset();
+        var bigTitleFsm = bigTitle.GetComponent<PlayMakerFSM>();
+        bigTitleFsm.SendEvent("TITLE UP");
+        Destroy(bigTitle.transform.GetChild(1).GetChild(2).gameObject);
+        yield return new WaitForSeconds(0.1f);
+        bigTitle.transform.GetChild(1).GetChild(1).gameObject.SetActive(true);
+        var super = bigTitle.transform.GetChild(1).GetChild(1).GetChild(1).gameObject;
+        var main = bigTitle.transform.GetChild(1).GetChild(1).GetChild(0).gameObject;
+        super.transform.localScale *= 1.4f;
+        main.transform.localScale *= 0.8f;
+        super.GetComponent<SetTextMeshProGameText>()!.enabled = false;
+        main.GetComponent<SetTextMeshProGameText>()!.enabled = false;
+        super.GetComponent<ChangeFontByLanguage>()!.enabled = false;
+        main.GetComponent<ChangeFontByLanguage>()!.enabled = false;
+        super.SendMessage("SetText", "Pale");
+        main.SendMessage("SetText", "Automaton");
     }
     private static IEnumerator SpawnSongKnight()
     {
@@ -103,16 +139,16 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Helpers.RemoveEventFromState("Rising Slash Followup", "STEP");
         Helpers.RemoveEventFromState("WJ Cross Slash", "CANCEL");
         Helpers.RemoveEventFromState("Jump Rise", "LAND");
+        controlFsm.GetState("Enc Wake")!.AddLambdaMethod(_ =>
+        {
+            Instance.StartCoroutine(DisplayBigTitle());
+            Instance.StartCoroutine(FancyZoomOut(2, 0.675f));
+        });
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f;
         controlFsm.GetFirstActionOfType<SetVelocityAsAngle>("Dive")!.speed = 120f;
-        controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.decelerationX = 0.925f;
+        controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.decelerationX = 0.9f;
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -100f;
-
-        controlFsm.GetState("WindSlash Antic")!.AddLambdaMethod(_ =>
-        {
-            windslashGround = controlFsm.Fsm.previousActiveState.name.EndsWith('G');
-        });
-        
+        controlFsm.GetState("WindSlash Antic")!.AddLambdaMethod(_ => { windslashGround = controlFsm.Fsm.previousActiveState.name.EndsWith('G'); });
         controlFsm.GetLastActionOfType<SetVelocityByScale>("CrossSlash Recoil")!.speed = 15f;
         controlFsm.GetFirstActionOfType<Wait>("Idle")!.time = -1f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.floatVariable = 0f;
@@ -125,5 +161,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("Dive Antic")!.AddAction(new Wait { time = 0.3f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("WindSlash Antic")!.AddAction(new Wait { time = 0.4f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("DashStab Antic")!.AddAction(new Wait { time = 0.5f, finishEvent = FsmEvent.Finished, realTime = false });
+    }
+    public IEnumerator Start()
+    {
+        yield return new WaitForSeconds(2f);
+        Harmony.CreateAndPatchAll(typeof(BossTitlePatch));
     }
 }

@@ -24,9 +24,9 @@ public class CustomBehaviour
             skProjectileSetup.name = "WindSlash";
         }
         var instance = Pools.GetWindSlash();
-        instance.transform.SetPosition2D(PaleAutomatonPlugin.projectilePoint.transform.position);
         instance.SetActive(true);
         yield return new WaitForSeconds(1);
         instance.SetActive(false);
+        instance.GetComponent<PlayMakerFSM>().Reset();
     }
 }

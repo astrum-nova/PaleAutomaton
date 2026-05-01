@@ -2,6 +2,7 @@
 using GlobalEnums;
 using HarmonyLib;
 using HutongGames.PlayMaker.Actions;
+using TeamCherry.Localization;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -55,5 +56,15 @@ public static class Patches
         hitInstance.DamageDealt = 0;
         PaleAutomatonPlugin.Instance.StartCoroutine(PaleAutomatonPlugin.damageHero.NailClash(0, "Nail Attack", PaleAutomatonPlugin.songKnight.transform.position));
         GameManager.instance.FreezeMoment(FreezeMomentTypes.NailClashEffect);
+    }
+}
+[HarmonyPatch]
+public static class BossTitlePatch
+{
+    [HarmonyPatch(typeof(Language), nameof(Language.Get), typeof(string), typeof(string))]
+    private static void Postfix(string key, string sheetTitle, ref string __result)
+    {
+        if (key == "SONG_KNIGHT_SUPER") __result = "";
+        if (key == "SONG_KNIGHT_MAIN") __result = "";
     }
 }
