@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace PaleAutomaton;
 
-public class CustomBehaviour
+public static class CustomBehaviour
 {
     public static ManagedAsset<GameObject> SK_PROJECTILE_ASSET = null!;
     public static GameObject skProjectileSetup = null!;
@@ -28,5 +28,19 @@ public class CustomBehaviour
         yield return new WaitForSeconds(1);
         instance.SetActive(false);
         instance.GetComponent<PlayMakerFSM>().Reset();
+    }
+    private static string parriedState = "";
+    public static IEnumerator AnticParry()
+    {
+        var currentState = PaleAutomatonPlugin.controlFsm.ActiveStateName;
+        if (parriedState.Equals(currentState)) yield break;
+        PaleAutomatonPlugin.controlFsm.SetState("Parry Dir");
+        yield return new WaitForSeconds(0.15f);
+        parriedState = currentState;
+        PaleAutomatonPlugin.controlFsm.SetState(currentState switch
+        {
+            "Dive Antic" => "Dive Dir",
+            _ => currentState
+        });
     }
 }

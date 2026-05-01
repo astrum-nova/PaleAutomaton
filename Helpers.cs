@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Linq;
 using Silksong.FsmUtil;
 using UnityEngine;
@@ -42,8 +43,28 @@ public static class Helpers
     public static void RemoveEventFromState(string stateName, string eventName)
     {
         var state = PaleAutomatonPlugin.controlFsm.FsmStates.FirstOrDefault(state => state.Name == stateName)!;
-        state.Transitions = state.Transitions
-            .Where(t => t.EventName != eventName)
-            .ToArray();
+        state.Transitions = state.Transitions.Where(t => t.EventName != eventName).ToArray();
+    }
+    public static IEnumerator DelayedTurnAround(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        PaleAutomatonPlugin.controlFsm.transform.FlipLocalScale(x:true);
+    }
+    public static IEnumerator ScheduleNextState(float delay, string state)
+    {
+        yield return new WaitForSeconds(delay);
+        PaleAutomatonPlugin.controlFsm.SetState(state);
+    }
+    public static IEnumerator DiveTurnaround()
+    {
+        yield return new WaitForSeconds(0.15f);
+        if (PaleAutomatonPlugin.songKnight.transform.localScale.x > 0)
+        {
+            if (PaleAutomatonPlugin.songKnight.transform.position.x < HeroController.instance.transform.position.x) PaleAutomatonPlugin.songKnight.transform.FlipLocalScale(x: true);
+        }
+        else
+        {
+            if (PaleAutomatonPlugin.songKnight.transform.position.x > HeroController.instance.transform.position.x) PaleAutomatonPlugin.songKnight.transform.FlipLocalScale(x: true);
+        }
     }
 }

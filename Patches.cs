@@ -52,19 +52,15 @@ public static class Patches
     private static void HealthManager_Hit(HealthManager __instance, ref HitInstance hitInstance)
     {
         if (!PaleAutomatonPlugin.bossScene) return;
-        if (!StateData.IsInParryableState()) return;
-        hitInstance.DamageDealt = 0;
-        PaleAutomatonPlugin.Instance.StartCoroutine(PaleAutomatonPlugin.damageHero.NailClash(0, "Nail Attack", PaleAutomatonPlugin.songKnight.transform.position));
-        GameManager.instance.FreezeMoment(FreezeMomentTypes.NailClashEffect);
-    }
-}
-[HarmonyPatch]
-public static class BossTitlePatch
-{
-    [HarmonyPatch(typeof(Language), nameof(Language.Get), typeof(string), typeof(string))]
-    private static void Postfix(string key, string sheetTitle, ref string __result)
-    {
-        if (key == "SONG_KNIGHT_SUPER") __result = "";
-        if (key == "SONG_KNIGHT_MAIN") __result = "";
+        if (StateData.IsInParryableState())
+        {
+            hitInstance.DamageDealt = 0;
+            PaleAutomatonPlugin.Instance.StartCoroutine(PaleAutomatonPlugin.damageHero.NailClash(0, "Nail Attack", PaleAutomatonPlugin.songKnight.transform.position));
+            GameManager.instance.FreezeMoment(FreezeMomentTypes.NailClashEffect);
+        }
+        else if (PaleAutomatonPlugin.controlFsm.ActiveStateName.Contains("Antic"))
+        {
+            PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.AnticParry());
+        }
     }
 }

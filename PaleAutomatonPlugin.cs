@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using BepInEx;
 using HarmonyLib;
@@ -6,49 +5,53 @@ using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
-using TMProOld;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace PaleAutomaton;
 
 [BepInAutoPlugin(id: "io.github.astrum-nova.paleautomaton")]
+[BepInDependency("org.silksong-modding.fsmutil")]
+[BepInDependency("org.silksong-modding.assethelper")]
 public partial class PaleAutomatonPlugin : BaseUnityPlugin
 {
-    //* Cached WaitForSeconds
-    private static WaitForSeconds _waitForSeconds0_005 = new(0.005f);
-
     //* Boss References
     public static PaleAutomatonPlugin Instance { get; private set; } = null!;
     public static ManagedAsset<GameObject> SK_ASSET = null!;
     public static ManagedAsset<GameObject> BIG_TITLE = null!;
     public static GameObject songKnightBossScene = null!;
     public static GameObject songKnight = null!;
-    public static GameObject projectile = null!;
     public static PlayMakerFSM controlFsm = null!;
-    public static HealthManager healthManager;
-    public static DamageHero damageHero;
-    public static GameObject projectilePoint;
+    public static HealthManager healthManager = null!;
+    public static DamageHero damageHero = null!;
     
     //* Flags
-    public static bool bossScene = false;
-    public static bool windslashGround = false;
+    public static bool PHASE_2 = false;
+    public static bool PHASE_3 = false;
+    public static bool PHASE_4 = false;
+    public static bool bossScene;
+    public static bool windslashGround;
+    public static bool dashStabbedOnce;
+    
     private void Awake()
     {
         Instance = this;
         Logger.LogInfo($"Plugin {Name} ({Id}) has loaded!");
         Harmony.CreateAndPatchAll(typeof(Patches));
+        SK_ASSET = ManagedAsset<GameObject>.FromSceneAsset("hang_17b", "Boss Scene - To Additive Load");
+        BIG_TITLE = ManagedAsset<GameObject>.FromSceneAsset("cradle_03", "Boss Scene/Boss Title");
+        CustomBehaviour.SK_PROJECTILE_ASSET = ManagedAsset<GameObject>.FromNonSceneAsset("Assets/Prefabs/Hornet Enemies/Song Knight Projectile.prefab", "localpoolprefabs_assets_areahangareasong");
         SceneManager.sceneLoaded += (scene, _) =>
         {
             bossScene = false;
             GameCameras.instance.tk2dCam.ZoomFactor = 1;
             if (!GameManager.instance.IsGameplayScene()) return;
             if (scene.name != "Arborium_11") return;
-            bossScene = true;
-            StartCoroutine(PlaceHornet());
             var quest = GameObject.Find("Merchant Quest Parent")!;
             if (quest.transform.GetChild(0).gameObject.activeSelf) return; //! REMEMBER TO PLAYTEST THIS
             quest.SetActive(false);
+            bossScene = true;
+            StartCoroutine(PlaceHornet());
             foreach (var rootGameObject in scene.GetRootGameObjects())
             {
                 if (rootGameObject.name.StartsWith("Alert Range")) Destroy(rootGameObject);
@@ -64,9 +67,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             PlayerData.instance.encounteredSongChevalierBoss = true;
             Pools.Clear();
         };
-        SK_ASSET = ManagedAsset<GameObject>.FromSceneAsset("hang_17b", "Boss Scene - To Additive Load");
-        BIG_TITLE = ManagedAsset<GameObject>.FromSceneAsset("cradle_03", "Boss Scene/Boss Title");
-        CustomBehaviour.SK_PROJECTILE_ASSET = ManagedAsset<GameObject>.FromNonSceneAsset("Assets/Prefabs/Hornet Enemies/Song Knight Projectile.prefab", "localpoolprefabs_assets_areahangareasong");
     }
     private static IEnumerator PlaceHornet()
     {
@@ -82,8 +82,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         {
             elapsed += Time.deltaTime;
             var t = Mathf.Clamp01(elapsed / duration);
-            var easeInOut = t < 0.5 ? 4 * t * t * t : 1 - Mathf.Pow(-2 * t + 2, 3) / 2;
-            GameCameras.instance.tk2dCam.ZoomFactor = Mathf.Lerp(startZoom, targetZoom, easeInOut);
+            GameCameras.instance.tk2dCam.ZoomFactor = Mathf.Lerp(startZoom, targetZoom, t < 0.5 ? 4 * t * t * t : 1 - Mathf.Pow(-2 * t + 2, 3) / 2);
             yield return null;
         }
         GameCameras.instance.tk2dCam.ZoomFactor = targetZoom;
@@ -94,12 +93,14 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         var bigTitle = BIG_TITLE.InstantiateAsset();
         var bigTitleFsm = bigTitle.GetComponent<PlayMakerFSM>();
         bigTitleFsm.SendEvent("TITLE UP");
+        //? The text object of the title is disabled cause GMS uses a custom image, we destroy the image to use custom text
         Destroy(bigTitle.transform.GetChild(1).GetChild(2).gameObject);
         yield return new WaitForSeconds(0.1f);
+        //? Enable the text object
         bigTitle.transform.GetChild(1).GetChild(1).gameObject.SetActive(true);
         var super = bigTitle.transform.GetChild(1).GetChild(1).GetChild(1).gameObject;
         var main = bigTitle.transform.GetChild(1).GetChild(1).GetChild(0).gameObject;
-        super.transform.localScale *= 1.4f;
+        super.transform.localScale *= 1.6f;
         main.transform.localScale *= 0.8f;
         super.GetComponent<SetTextMeshProGameText>()!.enabled = false;
         main.GetComponent<SetTextMeshProGameText>()!.enabled = false;
@@ -116,20 +117,32 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Destroy(songKnightBossScene.transform.GetChild(0).gameObject);
         Destroy(songKnightBossScene.transform.GetChild(1).gameObject);
         songKnight = songKnightBossScene.transform.GetChild(2).gameObject;
-        projectilePoint = songKnight.transform.Find("Projectile Point").gameObject;
         healthManager = songKnight.GetComponent<HealthManager>();
         healthManager.recoil = null;
         Destroy(songKnight.LocateMyFSM("Stun Control"));
         controlFsm = songKnight.LocateMyFSM("Control");
+        //? These clamp hornets position on connect, these are intended for the original arena so we need to expand them
+        //TODO: Fine tune them to the arena borders if you end up making arena borders
         controlFsm.GetFirstActionOfType<FloatClamp>("Dash Slash 3")!.minValue = -1000;
         controlFsm.GetFirstActionOfType<FloatClamp>("Dash Slash 3")!.maxValue = 1000;
         var saveHeroFsm = songKnight.LocateMyFSM("Save Hero");
         saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.minValue = -1000;
         saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.maxValue = 1000;
+        //? The rising slash animates hornets position to a point, but for some reason the point is always on the right, this fixes it
         var mainFsm = songKnight.LocateMyFSM("FSM");
         mainFsm.GetState("Catch")!.InsertLambdaMethod(_ => { if (HeroController.instance.transform.position.x < songKnight.transform.position.x) mainFsm.GetFirstActionOfType<AnimatePositionTo>("Catch")!.toValue.value.x *= -1; }, 3);
         damageHero = songKnight.GetComponent<DamageHero>();
         damageHero.enabled = false;
+
+        var mainHitbox = songKnight.transform.Find("ComboSlash 1").gameObject.GetComponent<PolygonCollider2D>().points!;
+        foreach (var hitbox in new[]
+                 {
+                     "DashStab Hit 1",
+                     "DashStab Hit 2",
+                     "ComboSlash 2",
+                 })
+            songKnight.transform.Find(hitbox).gameObject.GetComponent<PolygonCollider2D>().SetPath(0, mainHitbox);
+        
         SetupPaleAutomaton();
     }
     private static void SetupPaleAutomaton()
@@ -143,11 +156,12 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         {
             Instance.StartCoroutine(DisplayBigTitle());
             Instance.StartCoroutine(FancyZoomOut(2, 0.675f));
+            controlFsm.GetState("Battle Start")!.RemoveActionsOfType<DisplayBossTitle>();
         });
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f;
         controlFsm.GetFirstActionOfType<SetVelocityAsAngle>("Dive")!.speed = 120f;
         controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.decelerationX = 0.9f;
-        controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -100f;
+        controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -250;
         controlFsm.GetState("WindSlash Antic")!.AddLambdaMethod(_ => { windslashGround = controlFsm.Fsm.previousActiveState.name.EndsWith('G'); });
         controlFsm.GetLastActionOfType<SetVelocityByScale>("CrossSlash Recoil")!.speed = 15f;
         controlFsm.GetFirstActionOfType<Wait>("Idle")!.time = -1f;
@@ -159,12 +173,22 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f;
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 15;
         controlFsm.GetState("Dive Antic")!.AddAction(new Wait { time = 0.3f, finishEvent = FsmEvent.Finished, realTime = false });
+        controlFsm.GetState("Dive Land")!.AddLambdaMethod(_ => Instance.StartCoroutine(Helpers.DiveTurnaround()));
         controlFsm.GetState("WindSlash Antic")!.AddAction(new Wait { time = 0.4f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("DashStab Antic")!.AddAction(new Wait { time = 0.5f, finishEvent = FsmEvent.Finished, realTime = false });
-    }
-    public IEnumerator Start()
-    {
-        yield return new WaitForSeconds(2f);
-        Harmony.CreateAndPatchAll(typeof(BossTitlePatch));
+        controlFsm.GetState("DashStab Dash")!.AddAction(new Wait { time = 0.02f, finishEvent = FsmEvent.Finished, realTime = false });
+        controlFsm.GetState("Stab 1")!.AddLambdaMethod(_ =>
+        {
+            controlFsm.StartCoroutine(Helpers.DelayedTurnAround(0.15f));
+            if (PHASE_2)
+            {
+                if (dashStabbedOnce)
+                {
+                    controlFsm.StartCoroutine(Helpers.ScheduleNextState(0.2f, "DashStab Antic"));
+                    dashStabbedOnce = false;
+                }
+                else dashStabbedOnce = true;
+            }
+        });
     }
 }
