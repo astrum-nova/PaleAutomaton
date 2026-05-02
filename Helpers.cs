@@ -67,4 +67,10 @@ public static class Helpers
             if (PaleAutomatonPlugin.songKnight.transform.position.x > HeroController.instance.transform.position.x) PaleAutomatonPlugin.songKnight.transform.FlipLocalScale(x: true);
         }
     }
+    public static float GetAdaptedSpeed(float speed, float min, float max) => Mathf.Clamp(Math.Abs(HeroController.instance.transform.position.x - PaleAutomatonPlugin.songKnight.transform.position.x) * speed, min, max);
+    /*
+    Debug.Log("DISTANCE: " + Math.Abs(HeroController.instance.transform.position.x - PaleAutomatonPlugin.songKnight.transform.position.x));
+    Debug.Log("ADAPTED SPEED: " + Math.Abs(HeroController.instance.transform.position.x - PaleAutomatonPlugin.songKnight.transform.position.x) * speed);
+    Debug.Log("MAX: " + max + ", MIN: " + min);
+    */
 }

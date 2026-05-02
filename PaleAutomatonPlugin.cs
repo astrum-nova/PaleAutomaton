@@ -28,7 +28,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     
     //* Flags
     public static int INITIAL_HP = 1800;
-    public static int PHASE_2_THRESHOLD = 1775;
+    public static int PHASE_2_THRESHOLD = 1790;
     public static bool PHASE_2 = false;
     public static int PHASE_3_THRESHOLD = 1000;
     public static bool PHASE_3 = false;
@@ -36,7 +36,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static bool PHASE_4 = false;
     public static bool bossScene;
     public static bool windslashGround;
-    public static bool dashStabbedOnce;
+    public static bool dashToWindslashFollowup;
     
     private void Awake()
     {
@@ -56,7 +56,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             PHASE_3 = false;
             PHASE_4 = false;
             windslashGround = false;
-            dashStabbedOnce = false;
             var quest = GameObject.Find("Merchant Quest Parent")!;
             if (quest.transform.GetChild(0).gameObject.activeSelf) return; //! REMEMBER TO PLAYTEST THIS
             quest.SetActive(false);
@@ -144,9 +143,16 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         mainFsm.GetState("Catch")!.InsertLambdaMethod(_ => { if (HeroController.instance.transform.position.x < songKnight.transform.position.x) mainFsm.GetFirstActionOfType<AnimatePositionTo>("Catch")!.toValue.value.x *= -1; }, 3);
         damageHero = songKnight.GetComponent<DamageHero>();
         damageHero.enabled = false;
-        var mainHitbox = songKnight.transform.Find("ComboSlash 1").gameObject.GetComponent<PolygonCollider2D>().points!;
+        var comboSlash1 = songKnight.transform.Find("ComboSlash 1").gameObject;
+        var mainHitbox = comboSlash1.GetComponent<PolygonCollider2D>().points!;
+        comboSlash1.transform.localScale = new Vector3(1, 2, 1);
         foreach (var damageHeroComponent in songKnight.GetComponentsInChildren<DamageHero>(true)) damageHeroComponent.SetDamageAmount(2);
-        foreach (var hitbox in new[] {"DashStab Hit 1", "DashStab Hit 2", "ComboSlash 2"}) songKnight.transform.Find(hitbox).gameObject.GetComponent<PolygonCollider2D>().SetPath(0, mainHitbox);
+        foreach (var hitboxName in new[] {"DashStab Hit 1", "DashStab Hit 2", "ComboSlash 2"})
+        {
+            var hitbox = songKnight.transform.Find(hitboxName).gameObject;
+            hitbox.GetComponent<PolygonCollider2D>().SetPath(0, mainHitbox);
+            hitbox.transform.localScale = new Vector3(1, 2, 1);
+        }
         SetupPaleAutomaton();
     }
     public static void PhaseCheck()
@@ -155,6 +161,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         {
             PHASE_2 = true;
             Instance.StartCoroutine(CustomBehaviour.Phase2Transition());
+            SetupPhase2();
         }
     }
     private static void SetupPaleAutomaton()
@@ -173,10 +180,18 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             controlFsm.GetState("Battle Start")!.RemoveActionsOfType<DisplayBossTitle>();
         });
         foreach (var stateName in new[] {"Set DiveSlash", "Set Dash Attack", "Set Wind Slash", "Set CrossSlash", "Set Rising Slash"}) controlFsm.GetState(stateName)!.AddMethod(PhaseCheck);
+        controlFsm.GetState("DashStab Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -Helpers.GetAdaptedSpeed(25, 230, 330), 0);
+        controlFsm.GetState("DashStab Dash")!.AddAction(new ActivateGameObject
+        {
+            gameObject = controlFsm.GetFirstActionOfType<ActivateGameObject>("Stab 1")!.gameObject,
+            activate = true,
+            recursive = false,
+            resetOnExit = false,
+            everyFrame = false
+        });
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f;
         controlFsm.GetFirstActionOfType<SetVelocityAsAngle>("Dive")!.speed = 120f;
         controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.decelerationX = 0.9f;
-        controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -250;
         controlFsm.GetState("WindSlash Antic")!.AddMethod(() => { windslashGround = controlFsm.Fsm.previousActiveState.name.EndsWith('G'); });
         controlFsm.GetLastActionOfType<SetVelocityByScale>("CrossSlash Recoil")!.speed = 15f;
         controlFsm.GetFirstActionOfType<Wait>("Idle")!.time = -1f;
@@ -197,18 +212,45 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("DashStab Dash")!.AddAction(new Wait { time = 0.02f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("CrossSlash 1")!.AddMethod(() => HeroController.instance.StartInvulnerable(0.1f));
         controlFsm.GetState("Rising Slash")!.AddMethod(() => HeroController.instance.StartInvulnerable(0.1f));
-        controlFsm.GetState("Stab 1")!.AddMethod(() =>
+        controlFsm.GetState("Stab 1")!.AddMethod(() => controlFsm.StartCoroutine(Helpers.DelayedTurnAround(0.15f)));
+        controlFsm.GetState("Near Air Attack")!.AddMethod(() => Debug.Log("BORALRIOS"));
+    }
+    public static void SetupPhase2()
+    {
+        controlFsm.GetState("Dash to CS?")!.InsertMethod(() => controlFsm.SendEvent("FINISHED"), 0);
+        controlFsm.GetState("DashStab Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -Helpers.GetAdaptedSpeed(35, 260, 730), 0);
+        controlFsm.GetState("Dash Slash Antic")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash Antic")!.speed = -Helpers.GetAdaptedSpeed(12.5f, 110, 180), 0);
+        controlFsm.GetState("Stab 3")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Stab 3")!.speed = -Helpers.GetAdaptedSpeed(25f, 250, 300), 0);
+        controlFsm.GetState("Dash Slash Antic")!.AddAction(new ActivateGameObject
         {
-            controlFsm.StartCoroutine(Helpers.DelayedTurnAround(0.15f));
-            if (PHASE_2)
+            gameObject = controlFsm.GetFirstActionOfType<ActivateGameObject>("Dash Slash 1")!.gameObject,
+            activate = true,
+            recursive = false,
+            resetOnExit = false,
+            everyFrame = false
+        });
+        controlFsm.GetState("Dash Slash End")!.AddMethod(() => Instance.StartCoroutine(Helpers.DelayedTurnAround(0.1f)));
+        controlFsm.GetState("Dash Slash End")!.AddMethod(() => Instance.StartCoroutine(Helpers.ScheduleNextState(0.25f, "Stab 3")));
+        controlFsm.GetState("WindSlash")!.AddMethod(() =>
+        {
+            if (!windslashGround) return;
+            if (!dashToWindslashFollowup)
             {
-                if (dashStabbedOnce)
-                {
-                    controlFsm.StartCoroutine(Helpers.ScheduleNextState(0.2f, "DashStab Antic"));
-                    dashStabbedOnce = false;
-                }
-                else dashStabbedOnce = true;
+                Instance.StartCoroutine(Helpers.ScheduleNextState(0.3f, "DashStab Antic"));
+                Instance.StartCoroutine(Helpers.ScheduleNextState(0.47f, "DashStab Dash"));
+                dashToWindslashFollowup = true;
             }
+            else dashToWindslashFollowup = false;
+        });
+        controlFsm.GetState("Stab End 2")!.AddMethod(() =>
+        {
+            if (!dashToWindslashFollowup)
+            {
+                controlFsm.SetState("Windslash G");;
+                Instance.StartCoroutine(Helpers.ScheduleNextState(0.3f, "WindSlash"));
+                dashToWindslashFollowup = true;
+            }
+            else dashToWindslashFollowup = false;
         });
     }
 }
