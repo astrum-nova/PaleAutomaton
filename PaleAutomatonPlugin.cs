@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using BepInEx;
 using HarmonyLib;
@@ -27,7 +28,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     
     //* Flags
     public static int INITIAL_HP = 1800;
-    public static int PHASE_2_THRESHOLD = 1500;
+    public static int PHASE_2_THRESHOLD = 1775;
     public static bool PHASE_2 = false;
     public static int PHASE_3_THRESHOLD = 1000;
     public static bool PHASE_3 = false;
@@ -51,6 +52,11 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             GameCameras.instance.tk2dCam.ZoomFactor = 1;
             if (!GameManager.instance.IsGameplayScene()) return;
             if (scene.name != "Arborium_11") return;
+            PHASE_2 = false;
+            PHASE_3 = false;
+            PHASE_4 = false;
+            windslashGround = false;
+            dashStabbedOnce = false;
             var quest = GameObject.Find("Merchant Quest Parent")!;
             if (quest.transform.GetChild(0).gameObject.activeSelf) return; //! REMEMBER TO PLAYTEST THIS
             quest.SetActive(false);
@@ -123,6 +129,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         songKnight = songKnightBossScene.transform.GetChild(2).gameObject;
         healthManager = songKnight.GetComponent<HealthManager>();
         healthManager.recoil = null;
+        healthManager.hp = INITIAL_HP;
         Destroy(songKnight.LocateMyFSM("Stun Control"));
         controlFsm = songKnight.LocateMyFSM("Control");
         //? These clamp hornets position on connect, these are intended for the original arena so we need to expand them
@@ -142,29 +149,40 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         foreach (var hitbox in new[] {"DashStab Hit 1", "DashStab Hit 2", "ComboSlash 2"}) songKnight.transform.Find(hitbox).gameObject.GetComponent<PolygonCollider2D>().SetPath(0, mainHitbox);
         SetupPaleAutomaton();
     }
+    public static void PhaseCheck()
+    {
+        if (healthManager.hp <= PHASE_2_THRESHOLD && !PHASE_2)
+        {
+            PHASE_2 = true;
+            Instance.StartCoroutine(CustomBehaviour.Phase2Transition());
+        }
+    }
     private static void SetupPaleAutomaton()
     {
+        Helpers.RemoveEventFromState("Parry Antic", "TOOK DAMAGE");
         Helpers.RemoveEventFromState("Target Check", "NEEDOLIN");
         Helpers.RemoveEventFromState("Rising Slash Followup", "FALL");
         Helpers.RemoveEventFromState("Rising Slash Followup", "STEP");
         Helpers.RemoveEventFromState("WJ Cross Slash", "CANCEL");
         Helpers.RemoveEventFromState("Jump Rise", "LAND");
         Helpers.RemoveEventFromState("Become Active", "BLOCKED HIT");
-        controlFsm.GetState("Enc Wake")!.AddLambdaMethod(_ =>
+        controlFsm.GetState("Enc Wake")!.AddMethod(() =>
         {
             Instance.StartCoroutine(DisplayBigTitle());
             Instance.StartCoroutine(FancyZoomOut(2, 0.675f));
             controlFsm.GetState("Battle Start")!.RemoveActionsOfType<DisplayBossTitle>();
         });
+        foreach (var stateName in new[] {"Set DiveSlash", "Set Dash Attack", "Set Wind Slash", "Set CrossSlash", "Set Rising Slash"}) controlFsm.GetState(stateName)!.AddMethod(PhaseCheck);
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f;
         controlFsm.GetFirstActionOfType<SetVelocityAsAngle>("Dive")!.speed = 120f;
         controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.decelerationX = 0.9f;
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -250;
-        controlFsm.GetState("WindSlash Antic")!.AddLambdaMethod(_ => { windslashGround = controlFsm.Fsm.previousActiveState.name.EndsWith('G'); });
+        controlFsm.GetState("WindSlash Antic")!.AddMethod(() => { windslashGround = controlFsm.Fsm.previousActiveState.name.EndsWith('G'); });
         controlFsm.GetLastActionOfType<SetVelocityByScale>("CrossSlash Recoil")!.speed = 15f;
         controlFsm.GetFirstActionOfType<Wait>("Idle")!.time = -1f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.floatVariable = 0f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.falseValue = 0f;
+        controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.trueValue = 0f;
         controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.maxValue = 255;
         controlFsm.GetFirstActionOfType<FloatClamp>("Dive R")!.minValue = 285f;
         controlFsm.GetLastActionOfType<FaceObjectV2>("Dive Dir")!.pauseBetweenTurns = 0f;
@@ -173,13 +191,13 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f;
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 15;
         controlFsm.GetState("Dive Antic")!.AddAction(new Wait { time = 0.3f, finishEvent = FsmEvent.Finished, realTime = false });
-        controlFsm.GetState("Dive Land")!.AddLambdaMethod(_ => Instance.StartCoroutine(Helpers.DiveTurnaround()));
+        controlFsm.GetState("Dive Land")!.AddMethod(() => Instance.StartCoroutine(Helpers.DiveTurnaround()));
         controlFsm.GetState("WindSlash Antic")!.AddAction(new Wait { time = 0.4f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("DashStab Antic")!.AddAction(new Wait { time = 0.5f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("DashStab Dash")!.AddAction(new Wait { time = 0.02f, finishEvent = FsmEvent.Finished, realTime = false });
-        controlFsm.GetState("CrossSlash 1")!.AddLambdaMethod(_ => HeroController.instance.StartInvulnerable(0.1f));
-        controlFsm.GetState("Rising Slash")!.AddLambdaMethod(_ => HeroController.instance.StartInvulnerable(0.1f));
-        controlFsm.GetState("Stab 1")!.AddLambdaMethod(_ =>
+        controlFsm.GetState("CrossSlash 1")!.AddMethod(() => HeroController.instance.StartInvulnerable(0.1f));
+        controlFsm.GetState("Rising Slash")!.AddMethod(() => HeroController.instance.StartInvulnerable(0.1f));
+        controlFsm.GetState("Stab 1")!.AddMethod(() =>
         {
             controlFsm.StartCoroutine(Helpers.DelayedTurnAround(0.15f));
             if (PHASE_2)
@@ -192,6 +210,5 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
                 else dashStabbedOnce = true;
             }
         });
-        controlFsm.GetState("Idle")!.AddLambdaMethod(_ => { Debug.Log("IDLE STATE");});
     }
 }

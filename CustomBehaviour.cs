@@ -1,5 +1,9 @@
 ﻿using System.Collections;
+using GenericVariableExtension;
+using HutongGames.PlayMaker;
+using HutongGames.PlayMaker.Actions;
 using Silksong.AssetHelper.ManagedAssets;
+using Silksong.FsmUtil;
 using UnityEngine;
 
 namespace PaleAutomaton;
@@ -43,5 +47,27 @@ public static class CustomBehaviour
             "Dive Antic" => "Dive Dir",
             _ => currentState
         });
+    }
+
+    public static IEnumerator Phase2Transition()
+    {
+        PaleAutomatonPlugin.controlFsm.SetState("Parry Antic");
+        PaleAutomatonPlugin.controlFsm.GetState("Parry Stance")!.AddAction(new StartRoarEmitter
+        {
+            spawnPoint = new FsmOwnerDefault { gameObject = PaleAutomatonPlugin.songKnight, GameObject = PaleAutomatonPlugin.songKnight },
+            delay = 0f,
+            stunHero = true,
+            roarBurst = false,
+            isSmall = false,
+            noVisualEffect = false,
+            forceThroughBind = true,
+            stopOnExit = true
+        });
+        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.controlFsm.SendEvent("BLOCKED HIT");
+        yield return new WaitForSeconds(0.3f);
+        HeroController.instance.StartInvulnerable(0.2f);
+        yield return new WaitForSeconds(1);
+        PaleAutomatonPlugin.controlFsm.GetState("Parry Stance")!.RemoveActionsOfType<StartRoarEmitter>();
     }
 }

@@ -70,7 +70,26 @@ public static class Patches
         if (!PaleAutomatonPlugin.bossScene) return;
         HeroController.instance.AddSilkParts(1, false);
         PaleAutomatonPlugin.healthManager.SpriteFlash.flashArmoured();
-        if (PaleAutomatonPlugin.healthManager.hp - PlayerData.instance.nailDamage / 2 > 1) PaleAutomatonPlugin.healthManager.hp -= PlayerData.instance.nailDamage / 2;
-        else PaleAutomatonPlugin.healthManager.hp = 1;
+        var damage = PlayerData.instance.nailDamage / 2;
+        if (PaleAutomatonPlugin.PHASE_4)
+        {
+            if (PaleAutomatonPlugin.healthManager.hp - damage > 1) PaleAutomatonPlugin.healthManager.hp -= damage;
+            else PaleAutomatonPlugin.healthManager.hp = 1;
+        }
+        else if (PaleAutomatonPlugin.PHASE_3)
+        {
+            if (PaleAutomatonPlugin.healthManager.hp - damage > PaleAutomatonPlugin.PHASE_4_THRESHOLD) PaleAutomatonPlugin.healthManager.hp -= damage;
+            else PaleAutomatonPlugin.healthManager.hp = PaleAutomatonPlugin.PHASE_4_THRESHOLD;
+        }
+        else if (PaleAutomatonPlugin.PHASE_2)
+        {
+            if (PaleAutomatonPlugin.healthManager.hp - damage > PaleAutomatonPlugin.PHASE_3_THRESHOLD) PaleAutomatonPlugin.healthManager.hp -= damage;
+            else PaleAutomatonPlugin.healthManager.hp = PaleAutomatonPlugin.PHASE_3_THRESHOLD;
+        }
+        else
+        {
+            if (PaleAutomatonPlugin.healthManager.hp - damage > PaleAutomatonPlugin.PHASE_2_THRESHOLD) PaleAutomatonPlugin.healthManager.hp -= damage;
+            else PaleAutomatonPlugin.healthManager.hp = PaleAutomatonPlugin.PHASE_2_THRESHOLD;
+        }
     }
 }
