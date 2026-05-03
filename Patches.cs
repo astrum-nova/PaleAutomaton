@@ -59,7 +59,7 @@ public static class Patches
             PaleAutomatonPlugin.Instance.StartCoroutine(PaleAutomatonPlugin.damageHero.NailClash(0, "Nail Attack", PaleAutomatonPlugin.songKnight.transform.position));
             GameManager.instance.FreezeMoment(FreezeMomentTypes.NailClashEffect);
         }
-        else if (PaleAutomatonPlugin.controlFsm.ActiveStateName.Contains("Antic") && PaleAutomatonPlugin.controlFsm.ActiveStateName is not "Dash Slash Antic")
+        else if (PaleAutomatonPlugin.controlFsm.ActiveStateName.Contains("Antic") && PaleAutomatonPlugin.controlFsm.ActiveStateName is not "Dash Slash Antic" && !PaleAutomatonPlugin.customComboSequence)
         {
             PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.AnticParry());
         }

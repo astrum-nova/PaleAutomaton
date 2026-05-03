@@ -38,6 +38,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static bool windslashGround;
     public static bool customComboSequence;
     public static bool dashToWindslashFollowup;
+    public static bool rapidSlashFollowupAllowed;
     
     private void Awake()
     {
@@ -154,6 +155,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             hitbox.GetComponent<PolygonCollider2D>().SetPath(0, mainHitbox);
             hitbox.transform.localScale = new Vector3(1, 2, 1);
         }
+        songKnight.transform.Find("Rising Slash").transform.localScale = new Vector3(1, 1.8f, 1);
         SetupPaleAutomaton();
     }
     public static void PhaseCheck()
@@ -174,6 +176,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Helpers.RemoveEventFromState("WJ Cross Slash", "CANCEL");
         Helpers.RemoveEventFromState("Jump Rise", "LAND");
         Helpers.RemoveEventFromState("Become Active", "BLOCKED HIT");
+        Helpers.RemoveEventFromState("Far Air Attack", "DIVE SLASH");
         controlFsm.GetState("Enc Wake")!.AddMethod(() =>
         {
             Instance.StartCoroutine(DisplayBigTitle());
@@ -191,20 +194,21 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             everyFrame = false
         });
         controlFsm.GetFirstActionOfType<SetVelocityAsAngle>("Dive")!.speed = 120f;
-        controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.decelerationX = 0.9f;
+        controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.decelerationX = 0.85f;
         controlFsm.GetState("WindSlash Antic")!.AddMethod(() => { windslashGround = controlFsm.Fsm.previousActiveState.name.EndsWith('G'); });
         controlFsm.GetLastActionOfType<SetVelocityByScale>("CrossSlash Recoil")!.speed = 15f;
         controlFsm.GetFirstActionOfType<Wait>("Idle")!.time = -1f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.floatVariable = 0f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.falseValue = 0f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.trueValue = 0f;
-        //! controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.maxValue = 255;
-        //! controlFsm.GetFirstActionOfType<FloatClamp>("Dive R")!.minValue = 285f;
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.minValue = 195;
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dive R")!.maxValue = 345;
         controlFsm.GetLastActionOfType<FaceObjectV2>("Dive Dir")!.pauseBetweenTurns = 0f;
         controlFsm.GetLastActionOfType<Wait>("CS Antic")!.time = 0.25f;
         controlFsm.GetState("Rising Slash Antic")!.AddAction(new Wait { time = 0.6f, finishEvent = FsmEvent.Finished, realTime = false });
-        controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f;
+        controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -80f;
         controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 15;
+        controlFsm.GetFirstActionOfType<FloatCompare>("Rising Slash Followup")!.float2 = 1000;
         controlFsm.GetState("Dive Antic")!.AddAction(new Wait { time = 0.3f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("Dive Land")!.AddMethod(() => Instance.StartCoroutine(Helpers.DiveTurnaround()));
         controlFsm.GetState("WindSlash Antic")!.AddAction(new Wait { time = 0.4f, finishEvent = FsmEvent.Finished, realTime = false });
@@ -213,7 +217,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("CrossSlash 1")!.AddMethod(() => HeroController.instance.StartInvulnerable(0.1f));
         controlFsm.GetState("Rising Slash")!.AddMethod(() => HeroController.instance.StartInvulnerable(0.1f));
         controlFsm.GetState("Stab 1")!.AddMethod(() => controlFsm.StartCoroutine(Helpers.DelayedTurnAround(0.15f)));
-        controlFsm.GetState("Near Air Attack")!.AddMethod(() => Debug.Log("BORALRIOS"));
     }
     public static void SetupPhase2()
     {
@@ -253,6 +256,26 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
                 dashToWindslashFollowup = true;
             }
             else dashToWindslashFollowup = false;
+        });
+        controlFsm.GetState("Rising Slash")!.AddMethod(() =>
+        {
+            if (customComboSequence) return;
+            Instance.StartCoroutine(CustomBehaviour.RisingSlashStarter());
+        });
+        controlFsm.GetState("Dive Land")!.AddMethod(() =>
+        {
+            if (customComboSequence) return;
+            Instance.StartCoroutine(CustomBehaviour.DiveStarter());
+        });
+        controlFsm.GetState("Dash Slash End 2")!.AddMethod(() =>
+        {
+            if (!rapidSlashFollowupAllowed || !customComboSequence) return;
+            Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup());
+        });
+        controlFsm.GetState("Rapid Slash End")!.AddMethod(() =>
+        {
+            if (!rapidSlashFollowupAllowed || !customComboSequence) return;
+            Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup());
         });
     }
 }

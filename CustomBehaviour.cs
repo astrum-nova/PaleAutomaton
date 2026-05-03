@@ -69,22 +69,91 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(1);
         PaleAutomatonPlugin.controlFsm.GetState("Parry Stance")!.RemoveActionsOfType<StartRoarEmitter>();
     }
-
+    public static IEnumerator RisingSlashStarter()
+    {
+        PaleAutomatonPlugin.customComboSequence = true;
+        yield return new WaitForSeconds(0.55f);
+        PaleAutomatonPlugin.controlFsm.SetState("CrossSlash 1");
+        yield return new WaitForSeconds(0.1f);
+        PaleAutomatonPlugin.controlFsm.SetState("Rising Slash Antic");
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -70f;
+        yield return new WaitForSeconds(0.01f);
+        PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+        yield return new WaitForSeconds(0.4f);
+        PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
+        yield return new WaitForSeconds(0.3f);
+        PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+        if (Random.value > 0.5f)
+        {
+            yield return new WaitForSeconds(0.2f);
+            PaleAutomatonPlugin.controlFsm.SetState("WindSlash");
+            yield return new WaitForSeconds(0.2f);
+            PaleAutomatonPlugin.controlFsm.SetState("Dive Dir");
+            yield return new WaitForSeconds(0.2f);
+        }
+        else
+        {
+            yield return new WaitForSeconds(0.175f);
+            PaleAutomatonPlugin.controlFsm.SetState("Dive Dir");
+            yield return new WaitForSeconds(0.05f);
+            PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+            yield return new WaitForSeconds(0.3f);
+            PaleAutomatonPlugin.controlFsm.SetState("Windslash G");
+            yield return new WaitForSeconds(0.3f);
+            PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+        }
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -80f;
+        yield return new WaitForSeconds(0.3f);
+        PaleAutomatonPlugin.customComboSequence = false;
+    }
     public static IEnumerator DoubleWindslashStarter()
     {
         PaleAutomatonPlugin.customComboSequence = true;
-        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 15;
-        yield return new WaitForSeconds(0.25f);
+        yield return new WaitForSeconds(0.2f);
         PaleAutomatonPlugin.controlFsm.SetState("WindSlash");
         yield return new WaitForSeconds(0.2f);
         PaleAutomatonPlugin.controlFsm.SetState("Dive Dir");
         yield return new WaitForSeconds(0.6f);
-        //todo: add a DashStab Antic >> Stab 3 mixup for the ground windslash
         PaleAutomatonPlugin.controlFsm.SetState("Windslash G");
         yield return new WaitForSeconds(0.3f);
         PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
         yield return new WaitForSeconds(0.3f);
         PaleAutomatonPlugin.customComboSequence = false;
-        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 15;
+    }
+
+    public static IEnumerator RapidSlashFollowup()
+    {
+        PaleAutomatonPlugin.controlFsm.SetState("DashStab Antic");
+        PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.ScheduleNextState(0.4f, "Stab 3"));
+        yield return new WaitForSeconds(0.3f);
+        PaleAutomatonPlugin.customComboSequence = false;
+    }
+    public static IEnumerator DiveStarter()
+    {
+        PaleAutomatonPlugin.customComboSequence = true;
+        var radpiSlash = Random.value > 0.5f;
+        if (radpiSlash)
+        {
+            yield return new WaitForSeconds(0.35f);
+            PaleAutomatonPlugin.rapidSlashFollowupAllowed = true;
+            PaleAutomatonPlugin.controlFsm.SetState("Rapid Slash Dash");
+        }
+        else
+        {
+            yield return new WaitForSeconds(0.2f);
+            PaleAutomatonPlugin.controlFsm.SetState("Rising Slash Antic");   
+            yield return new WaitForSeconds(0.15f);
+            PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");   
+            yield return new WaitForSeconds(0.4f);
+            PaleAutomatonPlugin.controlFsm.SetState("CS Antic");   
+            yield return new WaitForSeconds(0.1f);
+            PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+            yield return new WaitForSeconds(0.3f);
+            PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
+            yield return new WaitForSeconds(0.3f);
+            PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+        }
+        yield return new WaitForSeconds(0.3f);
+        if (!radpiSlash) PaleAutomatonPlugin.customComboSequence = false;
     }
 }
