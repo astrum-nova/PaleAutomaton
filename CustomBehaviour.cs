@@ -120,7 +120,6 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(0.3f);
         PaleAutomatonPlugin.customComboSequence = false;
     }
-
     public static IEnumerator RapidSlashFollowup()
     {
         PaleAutomatonPlugin.controlFsm.SetState("DashStab Antic");
@@ -145,7 +144,7 @@ public static class CustomBehaviour
             yield return new WaitForSeconds(0.15f);
             PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");   
             yield return new WaitForSeconds(0.4f);
-            PaleAutomatonPlugin.controlFsm.SetState("CS Antic");   
+            PaleAutomatonPlugin.controlFsm.SetState("CS Antic");
             yield return new WaitForSeconds(0.1f);
             PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
             yield return new WaitForSeconds(0.3f);
@@ -155,5 +154,20 @@ public static class CustomBehaviour
         }
         yield return new WaitForSeconds(0.3f);
         if (!radpiSlash) PaleAutomatonPlugin.customComboSequence = false;
+    }
+
+    public static IEnumerator CrossSlashStarter()
+    {
+        PaleAutomatonPlugin.customComboSequence = true;
+        yield return new WaitForSeconds(0.1f);
+        PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
+        yield return new WaitForSeconds(0.3f);
+        PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+        yield return new WaitForSeconds(0.175f);
+        PaleAutomatonPlugin.controlFsm.SetState("Dive Dir");
+        yield return new WaitForSeconds(0.05f);
+        PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+        yield return new WaitForSeconds(0.4f);
+        PaleAutomatonPlugin.customComboSequence = false;
     }
 }

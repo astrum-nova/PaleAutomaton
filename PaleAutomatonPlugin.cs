@@ -257,25 +257,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             }
             else dashToWindslashFollowup = false;
         });
-        controlFsm.GetState("Rising Slash")!.AddMethod(() =>
-        {
-            if (customComboSequence) return;
-            Instance.StartCoroutine(CustomBehaviour.RisingSlashStarter());
-        });
-        controlFsm.GetState("Dive Land")!.AddMethod(() =>
-        {
-            if (customComboSequence) return;
-            Instance.StartCoroutine(CustomBehaviour.DiveStarter());
-        });
-        controlFsm.GetState("Dash Slash End 2")!.AddMethod(() =>
-        {
-            if (!rapidSlashFollowupAllowed || !customComboSequence) return;
-            Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup());
-        });
-        controlFsm.GetState("Rapid Slash End")!.AddMethod(() =>
-        {
-            if (!rapidSlashFollowupAllowed || !customComboSequence) return;
-            Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup());
-        });
+        controlFsm.GetState("Rising Slash")!.AddMethod(() => { if (customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.RisingSlashStarter()); });
+        controlFsm.GetState("Dive Land")!.AddMethod(() => { if (customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.DiveStarter()); });
+        controlFsm.GetState("Dash Slash End 2")!.AddMethod(() => { if (!rapidSlashFollowupAllowed || !customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup()); });
+        controlFsm.GetState("Rapid Slash End")!.AddMethod(() => { if (!rapidSlashFollowupAllowed || !customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup()); });
+        controlFsm.GetState("CrossSlash Recoil")!.AddMethod(() => { if (customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.CrossSlashStarter()); });
     }
 }
