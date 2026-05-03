@@ -45,6 +45,7 @@ public static class Patches
     [HarmonyPatch(typeof(GameManager), nameof(GameManager.FreezeMoment), typeof(FreezeMomentTypes), typeof(Action))]
     private static bool GameManager_FreezeMoment(GameManager __instance, FreezeMomentTypes type, Action onFinish)
     {
+        if (!PaleAutomatonPlugin.bossScene) return true;
         return type != FreezeMomentTypes.NailClashEffect;
     }
     [HarmonyPrefix]

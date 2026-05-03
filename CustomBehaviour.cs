@@ -48,7 +48,6 @@ public static class CustomBehaviour
             _ => currentState
         });
     }
-
     public static IEnumerator Phase2Transition()
     {
         PaleAutomatonPlugin.controlFsm.SetState("Parry Antic");
@@ -69,5 +68,23 @@ public static class CustomBehaviour
         HeroController.instance.StartInvulnerable(0.2f);
         yield return new WaitForSeconds(1);
         PaleAutomatonPlugin.controlFsm.GetState("Parry Stance")!.RemoveActionsOfType<StartRoarEmitter>();
+    }
+
+    public static IEnumerator DoubleWindslashStarter()
+    {
+        PaleAutomatonPlugin.customComboSequence = true;
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 15;
+        yield return new WaitForSeconds(0.25f);
+        PaleAutomatonPlugin.controlFsm.SetState("WindSlash");
+        yield return new WaitForSeconds(0.2f);
+        PaleAutomatonPlugin.controlFsm.SetState("Dive Dir");
+        yield return new WaitForSeconds(0.6f);
+        //todo: add a DashStab Antic >> Stab 3 mixup for the ground windslash
+        PaleAutomatonPlugin.controlFsm.SetState("Windslash G");
+        yield return new WaitForSeconds(0.3f);
+        PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+        yield return new WaitForSeconds(0.3f);
+        PaleAutomatonPlugin.customComboSequence = false;
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 15;
     }
 }

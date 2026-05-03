@@ -36,6 +36,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static bool PHASE_4 = false;
     public static bool bossScene;
     public static bool windslashGround;
+    public static bool customComboSequence;
     public static bool dashToWindslashFollowup;
     
     private void Awake()
@@ -189,7 +190,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             resetOnExit = false,
             everyFrame = false
         });
-        controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -60f;
         controlFsm.GetFirstActionOfType<SetVelocityAsAngle>("Dive")!.speed = 120f;
         controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.decelerationX = 0.9f;
         controlFsm.GetState("WindSlash Antic")!.AddMethod(() => { windslashGround = controlFsm.Fsm.previousActiveState.name.EndsWith('G'); });
@@ -198,8 +198,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.floatVariable = 0f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.falseValue = 0f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.trueValue = 0f;
-        controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.maxValue = 255;
-        controlFsm.GetFirstActionOfType<FloatClamp>("Dive R")!.minValue = 285f;
+        //! controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.maxValue = 255;
+        //! controlFsm.GetFirstActionOfType<FloatClamp>("Dive R")!.minValue = 285f;
         controlFsm.GetLastActionOfType<FaceObjectV2>("Dive Dir")!.pauseBetweenTurns = 0f;
         controlFsm.GetLastActionOfType<Wait>("CS Antic")!.time = 0.25f;
         controlFsm.GetState("Rising Slash Antic")!.AddAction(new Wait { time = 0.6f, finishEvent = FsmEvent.Finished, realTime = false });
@@ -218,8 +218,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static void SetupPhase2()
     {
         controlFsm.GetState("Dash to CS?")!.InsertMethod(() => controlFsm.SendEvent("FINISHED"), 0);
-        controlFsm.GetState("DashStab Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -Helpers.GetAdaptedSpeed(35, 260, 730), 0);
-        controlFsm.GetState("Dash Slash Antic")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash Antic")!.speed = -Helpers.GetAdaptedSpeed(12.5f, 110, 180), 0);
+        controlFsm.GetState("DashStab Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -Helpers.GetAdaptedSpeed(35, 260, 870), 0);
+        controlFsm.GetState("Dash Slash Antic")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash Antic")!.speed = -Helpers.GetAdaptedSpeed(12.5f, 110, 210), 0);
         controlFsm.GetState("Stab 3")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Stab 3")!.speed = -Helpers.GetAdaptedSpeed(25f, 250, 300), 0);
         controlFsm.GetState("Dash Slash Antic")!.AddAction(new ActivateGameObject
         {
@@ -233,8 +233,9 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("Dash Slash End")!.AddMethod(() => Instance.StartCoroutine(Helpers.ScheduleNextState(0.25f, "Stab 3")));
         controlFsm.GetState("WindSlash")!.AddMethod(() =>
         {
-            if (!windslashGround) return;
-            if (!dashToWindslashFollowup)
+            if (customComboSequence) return;
+            if (!windslashGround) Instance.StartCoroutine(CustomBehaviour.DoubleWindslashStarter());
+            else if (!dashToWindslashFollowup)
             {
                 Instance.StartCoroutine(Helpers.ScheduleNextState(0.3f, "DashStab Antic"));
                 Instance.StartCoroutine(Helpers.ScheduleNextState(0.47f, "DashStab Dash"));
@@ -244,9 +245,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         });
         controlFsm.GetState("Stab End 2")!.AddMethod(() =>
         {
+            if (customComboSequence) return;
             if (!dashToWindslashFollowup)
             {
-                controlFsm.SetState("Windslash G");;
+                controlFsm.SetState("Windslash G");
                 Instance.StartCoroutine(Helpers.ScheduleNextState(0.3f, "WindSlash"));
                 dashToWindslashFollowup = true;
             }
