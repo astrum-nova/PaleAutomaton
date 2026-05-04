@@ -22,6 +22,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static ManagedAsset<GameObject> BIG_TITLE = null!;
     public static GameObject songKnightBossScene = null!;
     public static GameObject songKnight = null!;
+    public static GameObject tpEffect = null!;
     public static PlayMakerFSM controlFsm = null!;
     public static HealthManager healthManager = null!;
     public static DamageHero damageHero = null!;
@@ -157,6 +158,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         }
         songKnight.transform.Find("Rising Slash").transform.localScale = new Vector3(1, 1.8f, 1);
         songKnight.transform.Find("RapidSlash Collider").transform.localScale = new Vector3(1.2f, 1f, 1);
+        tpEffect = null!;
+        //tpEffect.SetActive(false);
         SetupPaleAutomaton();
     }
     public static bool PhaseCheck()
@@ -189,6 +192,11 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         foreach (var stateName in new[] {"Set DiveSlash", "Set Dash Attack", "Set Wind Slash", "Set CrossSlash", "Set Rising Slash"}) controlFsm.GetState(stateName)!.AddMethod(() =>
         {
             if (PhaseCheck()) return;
+            var dist = Math.Abs(songKnight.transform.position.x - HeroController.instance.transform.position.x);
+            Instance.StartCoroutine(CustomBehaviour.Teleport(
+                songKnight.transform.position.x + (songKnight.transform.position.x < HeroController.instance.transform.position.x ? dist : -dist),
+                songKnight.transform.position.y,
+                controlFsm.ActiveStateName));
         });
         controlFsm.GetState("DashStab Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -Helpers.GetAdaptedSpeed(25, 230, 330), 0);
         controlFsm.GetState("DashStab Dash")!.AddAction(new ActivateGameObject

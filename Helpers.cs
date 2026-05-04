@@ -55,6 +55,15 @@ public static class Helpers
         yield return new WaitForSeconds(delay);
         PaleAutomatonPlugin.controlFsm.SetState(state);
     }
+    public static IEnumerator TpEffect()
+    {
+        var tpEffect = Pools.GetTpEffect();
+        tpEffect.transform.position = PaleAutomatonPlugin.songKnight.transform.position;
+        tpEffect.GetComponent<PlayMakerFSM>().Reset();
+        tpEffect.SetActive(true);
+        yield return new WaitForSeconds(0.1f);
+        tpEffect.SetActive(false);
+    }
     public static IEnumerator DiveTurnaround()
     {
         yield return new WaitForSeconds(0.15f);

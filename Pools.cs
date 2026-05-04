@@ -8,8 +8,10 @@ public static class Pools
 {
     private static GameObject pooledObjectsParent = new("Pooled Objects Parent");
     private static readonly List<GameObject> windSlashes = [];
+    private static readonly List<GameObject> tpEffects = [];
 
     public static GameObject GetWindSlash() => GetPooledObject(windSlashes, CustomBehaviour.skProjectileSetup);
+    public static GameObject GetTpEffect() => GetPooledObject(windSlashes, PaleAutomatonPlugin.tpEffect);
 
     private static GameObject GetPooledObject(List<GameObject> pool, GameObject setup)
     {
@@ -36,5 +38,6 @@ public static class Pools
         pooledObjectsParent = new GameObject("Pooled Objects Parent");
         Object.DontDestroyOnLoad(pooledObjectsParent);
         windSlashes.Clear();
+        tpEffects.Clear();
     }
 }

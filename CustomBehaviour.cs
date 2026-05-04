@@ -169,7 +169,6 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(0.3f);
         if (!radpiSlash) PaleAutomatonPlugin.customComboSequence = false;
     }
-
     public static IEnumerator CrossSlashStarter()
     {
         PaleAutomatonPlugin.customComboSequence = true;
@@ -183,5 +182,23 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
         yield return new WaitForSeconds(0.4f);
         PaleAutomatonPlugin.customComboSequence = false;
+    }
+    public static IEnumerator Teleport(float x, float y, string nextState, float delay = 0.3f, float finishNextStateIn = -1)
+    {
+        var transform = PaleAutomatonPlugin.songKnight.transform;
+        PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
+        yield return new WaitForSeconds(0.05f);
+        transform.position = transform.position with { y = 1000 };
+        yield return new WaitForSeconds(delay);
+        PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
+        yield return new WaitForSeconds(0.05f);
+        transform.position = transform.position with { x = x };
+        transform.position = transform.position with { y = y };
+        PaleAutomatonPlugin.controlFsm.SetState(nextState);
+        if (finishNextStateIn != -1)
+        {
+            yield return new WaitForSeconds(finishNextStateIn);
+            PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+        }
     }
 }
