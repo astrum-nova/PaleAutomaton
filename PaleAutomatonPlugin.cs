@@ -156,16 +156,19 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             hitbox.transform.localScale = new Vector3(1, 2, 1);
         }
         songKnight.transform.Find("Rising Slash").transform.localScale = new Vector3(1, 1.8f, 1);
+        songKnight.transform.Find("RapidSlash Collider").transform.localScale = new Vector3(1.2f, 1f, 1);
         SetupPaleAutomaton();
     }
-    public static void PhaseCheck()
+    public static bool PhaseCheck()
     {
         if (healthManager.hp <= PHASE_2_THRESHOLD && !PHASE_2)
         {
             PHASE_2 = true;
             Instance.StartCoroutine(CustomBehaviour.Phase2Transition());
             SetupPhase2();
+            return true;
         }
+        return false;
     }
     private static void SetupPaleAutomaton()
     {
@@ -183,7 +186,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             Instance.StartCoroutine(FancyZoomOut(2, 0.675f));
             controlFsm.GetState("Battle Start")!.RemoveActionsOfType<DisplayBossTitle>();
         });
-        foreach (var stateName in new[] {"Set DiveSlash", "Set Dash Attack", "Set Wind Slash", "Set CrossSlash", "Set Rising Slash"}) controlFsm.GetState(stateName)!.AddMethod(PhaseCheck);
+        foreach (var stateName in new[] {"Set DiveSlash", "Set Dash Attack", "Set Wind Slash", "Set CrossSlash", "Set Rising Slash"}) controlFsm.GetState(stateName)!.AddMethod(() =>
+        {
+            if (PhaseCheck()) return;
+        });
         controlFsm.GetState("DashStab Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -Helpers.GetAdaptedSpeed(25, 230, 330), 0);
         controlFsm.GetState("DashStab Dash")!.AddAction(new ActivateGameObject
         {
@@ -216,6 +222,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("DashStab Dash")!.AddAction(new Wait { time = 0.02f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetState("CrossSlash 1")!.AddMethod(() => HeroController.instance.StartInvulnerable(0.1f));
         controlFsm.GetState("Rising Slash")!.AddMethod(() => HeroController.instance.StartInvulnerable(0.1f));
+        controlFsm.GetState("RapidSlash")!.AddMethod(() => HeroController.instance.StartInvulnerable(0.1f));
         controlFsm.GetState("Stab 1")!.AddMethod(() => controlFsm.StartCoroutine(Helpers.DelayedTurnAround(0.15f)));
     }
     public static void SetupPhase2()
@@ -224,6 +231,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("DashStab Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -Helpers.GetAdaptedSpeed(35, 260, 870), 0);
         controlFsm.GetState("Dash Slash Antic")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash Antic")!.speed = -Helpers.GetAdaptedSpeed(12.5f, 110, 210), 0);
         controlFsm.GetState("Stab 3")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Stab 3")!.speed = -Helpers.GetAdaptedSpeed(25f, 250, 300), 0);
+        controlFsm.GetState("Rapid Slash Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rapid Slash Dash")!.speed = -Helpers.GetAdaptedSpeed(4, 30, 300), 0);
         controlFsm.GetState("Dash Slash Antic")!.AddAction(new ActivateGameObject
         {
             gameObject = controlFsm.GetFirstActionOfType<ActivateGameObject>("Dash Slash 1")!.gameObject,
@@ -262,5 +270,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("Dash Slash End 2")!.AddMethod(() => { if (!rapidSlashFollowupAllowed || !customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup()); });
         controlFsm.GetState("Rapid Slash End")!.AddMethod(() => { if (!rapidSlashFollowupAllowed || !customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup()); });
         controlFsm.GetState("CrossSlash Recoil")!.AddMethod(() => { if (customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.CrossSlashStarter()); });
+        controlFsm.GetState("Jump Antic")!.AddAction(new Wait { time = 0.01f, finishEvent = FsmEvent.Finished, realTime = false });
+        controlFsm.GetFirstActionOfType<SetFloatValue>("Set Wind Slash")!.floatValue = 9;
     }
 }

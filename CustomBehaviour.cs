@@ -68,6 +68,20 @@ public static class CustomBehaviour
         HeroController.instance.StartInvulnerable(0.2f);
         yield return new WaitForSeconds(1);
         PaleAutomatonPlugin.controlFsm.GetState("Parry Stance")!.RemoveActionsOfType<StartRoarEmitter>();
+        PaleAutomatonPlugin.controlFsm.GetState("Rapid Slash End")!.AddAction(new SetVelocityByScale
+        {
+            gameObject = PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rapid Slash Dash")!.gameObject,
+            speed = 90,
+            ySpeed = 0,
+            everyFrame = false
+        });
+        PaleAutomatonPlugin.controlFsm.GetState("Rapid Slash End")!.AddAction(new SetVelocityByScale
+        {
+            gameObject = PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash End 2")!.gameObject,
+            speed = 90,
+            ySpeed = 0,
+            everyFrame = false
+        });
     }
     public static IEnumerator RisingSlashStarter()
     {
@@ -133,7 +147,7 @@ public static class CustomBehaviour
         var radpiSlash = Random.value > 0.5f;
         if (radpiSlash)
         {
-            yield return new WaitForSeconds(0.35f);
+            yield return new WaitForSeconds(0.3f);
             PaleAutomatonPlugin.rapidSlashFollowupAllowed = true;
             PaleAutomatonPlugin.controlFsm.SetState("Rapid Slash Dash");
         }

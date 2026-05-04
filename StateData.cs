@@ -18,6 +18,8 @@ public static class StateData
         "Dash Slash 2",
         "Dash Slash End",
         "Rising Slash",
+        "Rapid Slash Dash",
+        "RapidSlash",
     ];
     public static bool IsInParryableState() => parryableStates.Contains(PaleAutomatonPlugin.controlFsm.ActiveStateName);
 }
