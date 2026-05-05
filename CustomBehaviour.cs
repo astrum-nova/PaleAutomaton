@@ -12,6 +12,7 @@ public static class CustomBehaviour
 {
     public static ManagedAsset<GameObject> SK_PROJECTILE_ASSET = null!;
     public static GameObject skProjectileSetup = null!;
+    public static GameObject tpEffectSetup = null!;
     public static IEnumerator SpawnWindSlash()
     {
         if (!skProjectileSetup)
@@ -183,17 +184,17 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(0.4f);
         PaleAutomatonPlugin.customComboSequence = false;
     }
-    public static IEnumerator Teleport(float x, float y, string nextState, float delay = 0.3f, float finishNextStateIn = -1)
+    public static IEnumerator Teleport(float x, float y, string nextState, float delay = 0.2f, float finishNextStateIn = -1)
     {
+        PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = true;
         var transform = PaleAutomatonPlugin.songKnight.transform;
         PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
-        yield return new WaitForSeconds(0.05f);
         transform.position = transform.position with { y = 1000 };
         yield return new WaitForSeconds(delay);
-        PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
-        yield return new WaitForSeconds(0.05f);
         transform.position = transform.position with { x = x };
         transform.position = transform.position with { y = y };
+        PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
+        PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = false;
         PaleAutomatonPlugin.controlFsm.SetState(nextState);
         if (finishNextStateIn != -1)
         {

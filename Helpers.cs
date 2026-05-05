@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Linq;
+using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace PaleAutomaton;
 
@@ -57,12 +59,28 @@ public static class Helpers
     }
     public static IEnumerator TpEffect()
     {
-        var tpEffect = Pools.GetTpEffect();
-        tpEffect.transform.position = PaleAutomatonPlugin.songKnight.transform.position;
-        tpEffect.GetComponent<PlayMakerFSM>().Reset();
-        tpEffect.SetActive(true);
-        yield return new WaitForSeconds(0.1f);
-        tpEffect.SetActive(false);
+        if (!CustomBehaviour.tpEffectSetup)
+        {
+            yield return CustomBehaviour.SK_PROJECTILE_ASSET.Load();
+            CustomBehaviour.tpEffectSetup = CustomBehaviour.SK_PROJECTILE_ASSET.InstantiateAsset();
+            CustomBehaviour.tpEffectSetup.GetComponent<Collider2D>().isTrigger = true;
+            MakeProjectileIgnoreEnvironment(CustomBehaviour.tpEffectSetup);
+            RemoveProjectileWallEvents(CustomBehaviour.tpEffectSetup);
+            MakeProjectileRenderAboveWalls(CustomBehaviour.tpEffectSetup);
+            CustomBehaviour.tpEffectSetup.AddComponent<TeleportEffect>();
+            Object.Destroy(CustomBehaviour.tpEffectSetup.GetComponent<DamageHero>());
+            CustomBehaviour.tpEffectSetup.transform.localScale = new Vector3(0.75f, 1, 1);
+            CustomBehaviour.tpEffectSetup.SetActive(false);
+            CustomBehaviour.tpEffectSetup.transform.position = new Vector3(0, -1000, 0);
+            CustomBehaviour.tpEffectSetup.name = "TeleportEffect";
+        }
+        var tpEffectTop = Pools.GetTpEffect();
+        var tpEffectBottom = Object.Instantiate(tpEffectTop);
+        tpEffectTop.SetActive(true);
+        tpEffectBottom.SetActive(true);
+        yield return new WaitForSeconds(1);
+        tpEffectTop.SetActive(false);
+        tpEffectBottom.SetActive(false);
     }
     public static IEnumerator DiveTurnaround()
     {

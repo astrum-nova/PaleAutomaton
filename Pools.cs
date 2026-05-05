@@ -11,13 +11,13 @@ public static class Pools
     private static readonly List<GameObject> tpEffects = [];
 
     public static GameObject GetWindSlash() => GetPooledObject(windSlashes, CustomBehaviour.skProjectileSetup);
-    public static GameObject GetTpEffect() => GetPooledObject(windSlashes, PaleAutomatonPlugin.tpEffect);
+    public static GameObject GetTpEffect() => GetPooledObject(tpEffects, CustomBehaviour.tpEffectSetup);
 
     private static GameObject GetPooledObject(List<GameObject> pool, GameObject setup)
     {
         GameObject clone = null!;
         var found = false;
-        foreach (var obj in pool.Where(obj => !setup.name.Equals("spear") ? !obj.activeInHierarchy : !obj.transform.GetChild(0).gameObject.activeInHierarchy))
+        foreach (var obj in pool.Where(obj => !obj.activeSelf))
         {
             clone = obj;
             found = true;
