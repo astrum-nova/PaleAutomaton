@@ -61,26 +61,14 @@ public static class Helpers
     {
         if (!CustomBehaviour.tpEffectSetup)
         {
-            yield return CustomBehaviour.SK_PROJECTILE_ASSET.Load();
-            CustomBehaviour.tpEffectSetup = CustomBehaviour.SK_PROJECTILE_ASSET.InstantiateAsset();
-            CustomBehaviour.tpEffectSetup.GetComponent<Collider2D>().isTrigger = true;
-            MakeProjectileIgnoreEnvironment(CustomBehaviour.tpEffectSetup);
-            RemoveProjectileWallEvents(CustomBehaviour.tpEffectSetup);
-            MakeProjectileRenderAboveWalls(CustomBehaviour.tpEffectSetup);
-            CustomBehaviour.tpEffectSetup.AddComponent<TeleportEffect>();
-            Object.Destroy(CustomBehaviour.tpEffectSetup.GetComponent<DamageHero>());
-            CustomBehaviour.tpEffectSetup.transform.localScale = new Vector3(0.75f, 1, 1);
+            CustomBehaviour.tpEffectSetup = Object.Instantiate(GameObject.Find("Boss Death FinalHit"));
             CustomBehaviour.tpEffectSetup.SetActive(false);
-            CustomBehaviour.tpEffectSetup.transform.position = new Vector3(0, -1000, 0);
-            CustomBehaviour.tpEffectSetup.name = "TeleportEffect";
+            Object.Destroy(CustomBehaviour.tpEffectSetup.transform.Find("white_solid").gameObject);
         }
-        var tpEffectTop = Pools.GetTpEffect();
-        var tpEffectBottom = Object.Instantiate(tpEffectTop);
-        tpEffectTop.SetActive(true);
-        tpEffectBottom.SetActive(true);
+        var tpEffect = Pools.GetTpEffect();
+        tpEffect.SetActive(true);
         yield return new WaitForSeconds(1);
-        tpEffectTop.SetActive(false);
-        tpEffectBottom.SetActive(false);
+        tpEffect.SetActive(false);
     }
     public static IEnumerator DiveTurnaround()
     {
