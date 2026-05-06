@@ -33,7 +33,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static int INITIAL_HP = 1800;
     public static int PHASE_2_THRESHOLD = 1790;
     public static bool PHASE_2 = false;
-    public static int PHASE_3_THRESHOLD = 1000;
+    public static int PHASE_3_THRESHOLD = 1780;
     public static bool PHASE_3 = false;
     public static int PHASE_4_THRESHOLD = 1000;
     public static bool PHASE_4 = false;
@@ -164,6 +164,9 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         CustomBehaviour.tpEffectSetup = Instantiate(finalHitOriginal);
         CustomBehaviour.tpEffectSetup.SetActive(false);
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("white_solid").gameObject);
+        Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Slash").gameObject);
+        Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Strike L").gameObject);
+        Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Strike R").gameObject);
         SetupPaleAutomaton();
     }
     public static bool PhaseCheck()
@@ -173,6 +176,13 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             PHASE_2 = true;
             Instance.StartCoroutine(CustomBehaviour.Phase2Transition());
             SetupPhase2();
+            return true;
+        }
+
+        if (healthManager.hp <= PHASE_3_THRESHOLD && !PHASE_3)
+        {
+            PHASE_3 = true;
+            Instance.StartCoroutine(CustomBehaviour.Phase3Transition());
             return true;
         }
         return false;
@@ -196,13 +206,13 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         foreach (var stateName in new[] {"Set DiveSlash", "Set Dash Attack", "Set Wind Slash", "Set CrossSlash", "Set Rising Slash"}) controlFsm.GetState(stateName)!.AddMethod(() =>
         {
             if (PhaseCheck()) return;
-            
+            /*
             var dist = Math.Abs(songKnight.transform.position.x - HeroController.instance.transform.position.x);
             Instance.StartCoroutine(CustomBehaviour.Teleport(
                 songKnight.transform.position.x + (songKnight.transform.position.x < HeroController.instance.transform.position.x ? dist : -dist) * 2,
                 songKnight.transform.position.y,
                 "Do Move"));
-            
+            */
         });
         controlFsm.GetState("DashStab Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -Helpers.GetAdaptedSpeed(25, 230, 330), 0);
         controlFsm.GetState("DashStab Dash")!.AddAction(new ActivateGameObject

@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using GenericVariableExtension;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
@@ -48,6 +49,22 @@ public static class CustomBehaviour
             "Dive Antic" => "Dive Dir",
             _ => currentState
         });
+    }
+    public static IEnumerator Phase3Transition()
+    {
+        var hcPos = HeroController.instance.transform.position;
+        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName, 10));
+        yield return new WaitForSeconds(2);
+        var groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
+        groundSpikesCollider.name = "GroundSpikesCollider";
+        groundSpikesCollider.GetComponent<PolygonCollider2D>().SetPath(0, new List<Vector2>()
+        {
+            new(0, 0),
+            new(0, 2),
+            new(1000, 2),
+            new(1000, 0),
+        });
+        groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with {y = 10.5f};
     }
     public static IEnumerator Phase2Transition()
     {
