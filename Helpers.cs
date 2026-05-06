@@ -59,14 +59,10 @@ public static class Helpers
     }
     public static IEnumerator TpEffect()
     {
-        if (!CustomBehaviour.tpEffectSetup)
-        {
-            CustomBehaviour.tpEffectSetup = Object.Instantiate(GameObject.Find("Boss Death FinalHit"));
-            CustomBehaviour.tpEffectSetup.SetActive(false);
-            Object.Destroy(CustomBehaviour.tpEffectSetup.transform.Find("white_solid").gameObject);
-        }
         var tpEffect = Pools.GetTpEffect();
+        tpEffect.transform.position = PaleAutomatonPlugin.songKnight.transform.position;
         tpEffect.SetActive(true);
+        PaleAutomatonPlugin.healthManager.SpriteFlash.flashArmoured();
         yield return new WaitForSeconds(1);
         tpEffect.SetActive(false);
     }

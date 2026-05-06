@@ -1,13 +1,16 @@
 using System;
 using System.Collections;
+using System.Linq;
 using BepInEx;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using Mono.Security.X509;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
 
 namespace PaleAutomaton;
 
@@ -157,6 +160,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         }
         songKnight.transform.Find("Rising Slash").transform.localScale = new Vector3(1, 1.8f, 1);
         songKnight.transform.Find("RapidSlash Collider").transform.localScale = new Vector3(1.2f, 1f, 1);
+        var finalHitOriginal = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(g => g.name == "Boss Death FinalHit")!;
+        CustomBehaviour.tpEffectSetup = Instantiate(finalHitOriginal);
+        CustomBehaviour.tpEffectSetup.SetActive(false);
+        Destroy(CustomBehaviour.tpEffectSetup.transform.Find("white_solid").gameObject);
         SetupPaleAutomaton();
     }
     public static bool PhaseCheck()
@@ -189,11 +196,13 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         foreach (var stateName in new[] {"Set DiveSlash", "Set Dash Attack", "Set Wind Slash", "Set CrossSlash", "Set Rising Slash"}) controlFsm.GetState(stateName)!.AddMethod(() =>
         {
             if (PhaseCheck()) return;
+            
             var dist = Math.Abs(songKnight.transform.position.x - HeroController.instance.transform.position.x);
             Instance.StartCoroutine(CustomBehaviour.Teleport(
                 songKnight.transform.position.x + (songKnight.transform.position.x < HeroController.instance.transform.position.x ? dist : -dist) * 2,
                 songKnight.transform.position.y,
                 "Do Move"));
+            
         });
         controlFsm.GetState("DashStab Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -Helpers.GetAdaptedSpeed(25, 230, 330), 0);
         controlFsm.GetState("DashStab Dash")!.AddAction(new ActivateGameObject
