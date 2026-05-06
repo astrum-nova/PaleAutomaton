@@ -66,7 +66,7 @@ public static class Patches
     }
     [HarmonyPostfix]
     [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.NailClash))]
-    private static void DamageHero_NailClash(DamageHero __instance)
+    private static void DamageHero_NailClash_Postfix(DamageHero __instance)
     {
         if (!PaleAutomatonPlugin.bossScene) return;
         HeroController.instance.AddSilkParts(1, false);

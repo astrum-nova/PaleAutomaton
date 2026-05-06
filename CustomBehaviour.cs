@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using GenericVariableExtension;
+using GlobalEnums;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using Silksong.AssetHelper.ManagedAssets;
@@ -53,18 +54,26 @@ public static class CustomBehaviour
     public static IEnumerator Phase3Transition()
     {
         var hcPos = HeroController.instance.transform.position;
-        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName, 10));
+        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName, 3));
         yield return new WaitForSeconds(2);
         var groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
         groundSpikesCollider.name = "GroundSpikesCollider";
-        groundSpikesCollider.GetComponent<PolygonCollider2D>().SetPath(0, new List<Vector2>()
+        groundSpikesCollider.layer = LayerMask.NameToLayer("Enemies");
+        var damageHero = groundSpikesCollider.GetComponent<DamageHero>();
+        damageHero.SetDamageAmount(2);
+        damageHero.hazardType = HazardType.NON_HAZARD;
+        var collider = groundSpikesCollider.GetComponent<PolygonCollider2D>();
+        collider.name = "GroundSpikeColliderComponent";
+        collider.SetPath(0, new List<Vector2>()
         {
             new(0, 0),
-            new(0, 2),
-            new(1000, 2),
-            new(1000, 0),
+            new(0, 1),
+            new(1, 1),
+            new(1, 0),
         });
-        groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with {y = 10.5f};
+        groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with {y = 11.5f};
+        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { y = 180 };
+        PaleAutomatonPlugin.groundSpikesParent.SetActive(true);
     }
     public static IEnumerator Phase2Transition()
     {
@@ -93,9 +102,9 @@ public static class CustomBehaviour
             ySpeed = 0,
             everyFrame = false
         });
-        PaleAutomatonPlugin.controlFsm.GetState("Rapid Slash End")!.AddAction(new SetVelocityByScale
+        PaleAutomatonPlugin.controlFsm.GetState("Dash Slash End 2")!.AddAction(new SetVelocityByScale
         {
-            gameObject = PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash End 2")!.gameObject,
+            gameObject = PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rapid Slash Dash")!.gameObject,
             speed = 90,
             ySpeed = 0,
             everyFrame = false
@@ -206,7 +215,7 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = true;
         var transform = PaleAutomatonPlugin.songKnight.transform;
         PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
-        transform.position = transform.position with { y = 1000 };
+        transform.position = transform.position with { y = 100 };
         yield return new WaitForSeconds(delay);
         transform.position = transform.position with { x = x };
         transform.position = transform.position with { y = y };

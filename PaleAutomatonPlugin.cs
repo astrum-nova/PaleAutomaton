@@ -1,16 +1,14 @@
-using System;
 using System.Collections;
 using System.Linq;
 using BepInEx;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using Mono.Security.X509;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace PaleAutomaton;
 
@@ -23,8 +21,11 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static PaleAutomatonPlugin Instance { get; private set; } = null!;
     public static ManagedAsset<GameObject> SK_ASSET = null!;
     public static ManagedAsset<GameObject> BIG_TITLE = null!;
+    public static ManagedAsset<GameObject> GROUND_SPIKES = null!;
     public static GameObject songKnightBossScene = null!;
     public static GameObject songKnight = null!;
+    public static GameObject groundSpikesSetup = null!;
+    public static GameObject groundSpikesParent = null!;
     public static PlayMakerFSM controlFsm = null!;
     public static HealthManager healthManager = null!;
     public static DamageHero damageHero = null!;
@@ -50,6 +51,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Harmony.CreateAndPatchAll(typeof(Patches));
         SK_ASSET = ManagedAsset<GameObject>.FromSceneAsset("hang_17b", "Boss Scene - To Additive Load");
         BIG_TITLE = ManagedAsset<GameObject>.FromSceneAsset("cradle_03", "Boss Scene/Boss Title");
+        GROUND_SPIKES = ManagedAsset<GameObject>.FromSceneAsset("song_24", "sc_wall_spiked");
         CustomBehaviour.SK_PROJECTILE_ASSET = ManagedAsset<GameObject>.FromNonSceneAsset("Assets/Prefabs/Hornet Enemies/Song Knight Projectile.prefab", "localpoolprefabs_assets_areahangareasong");
         SceneManager.sceneLoaded += (scene, _) =>
         {
@@ -87,6 +89,25 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         yield return new WaitForSeconds(0.3475f);
         HeroController.instance.transform.position = new Vector3(46.8476f, 25.5938f, 0.004f);
         HeroController.instance.vignette.enabled = false;
+        yield return GROUND_SPIKES.Load();
+        groundSpikesSetup = GROUND_SPIKES.InstantiateAsset();
+        groundSpikesSetup.transform.position = new Vector3(1000, 1000, 0);
+        groundSpikesParent = new GameObject("GroundSpikesParent");
+        for (var i = 0; i < groundSpikesSetup.transform.childCount; i++) if (i > 7) groundSpikesSetup.transform.GetChild(i).gameObject.SetActive(false);
+        for (var i = 0; i < 18; i++)
+        {
+            yield return null;
+            var shifted = Instantiate(groundSpikesSetup, groundSpikesParent.transform, true);
+            shifted.transform.GetChild(0).transform.position = shifted.transform.GetChild(0).transform.position with { x = shifted.transform.GetChild(0).transform.position.x - 1.1f };
+            shifted.transform.GetChild(1).transform.position = shifted.transform.GetChild(1).transform.position with { x = shifted.transform.GetChild(1).transform.position.x - 1.1f };
+            shifted.transform.position = shifted.transform.position with { x = i * 10.15f + 43 };
+            shifted.transform.position = shifted.transform.position with { y = 7 };
+            shifted.transform.GetChild(0).transform.position = shifted.transform.GetChild(0).transform.position with { z = -1.4537f };
+            shifted.transform.GetChild(1).transform.position = shifted.transform.GetChild(1).transform.position with { z = -1.4537f };
+            shifted.transform.GetChild(6).transform.position = shifted.transform.GetChild(6).transform.position with { z = -1.4537f };
+            shifted.transform.GetChild(7).transform.position = shifted.transform.GetChild(7).transform.position with { z = -1.4537f };
+        }
+        groundSpikesParent.SetActive(false);
     }
     private static IEnumerator FancyZoomOut(float duration, float targetZoom)
     {
@@ -134,6 +155,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         healthManager = songKnight.GetComponent<HealthManager>();
         healthManager.recoil = null;
         healthManager.hp = INITIAL_HP;
+        healthManager.SetImmuneToSpikes(true);
+        healthManager.SetImmuneToTraps(true);
         Destroy(songKnight.LocateMyFSM("Stun Control"));
         controlFsm = songKnight.LocateMyFSM("Control");
         //? These clamp hornets position on connect, these are intended for the original arena so we need to expand them
