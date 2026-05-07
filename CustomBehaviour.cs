@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using GenericVariableExtension;
 using GlobalEnums;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
@@ -52,36 +53,6 @@ public static class CustomBehaviour
             "Dive Antic" => "Dive Dir",
             _ => currentState
         });
-    }
-    public static IEnumerator Phase3Transition()
-    {
-        yield return Teleport(-50, 100, "First Idle");
-        PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
-        yield return new WaitForSeconds(1);
-        var groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
-        groundSpikesCollider.name = "GroundSpikesCollider";
-        groundSpikesCollider.layer = LayerMask.NameToLayer("Enemies");
-        var damageHero = groundSpikesCollider.GetComponent<DamageHero>();
-        damageHero.SetDamageAmount(2);
-        damageHero.hazardType = HazardType.NON_HAZARD;
-        var collider = groundSpikesCollider.GetComponent<PolygonCollider2D>();
-        collider.name = "GroundSpikeColliderComponent";
-        collider.SetPath(0, new List<Vector2>()
-        {
-            new(0, 0),
-            new(0, 1),
-            new(1, 1),
-            new(1, 0),
-        });
-        groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with {y = 12.5f};
-        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { y = 180 };
-        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { x = 30 };
-        PaleAutomatonPlugin.groundSpikesParent.SetActive(true);
-        yield return new WaitForSeconds(0.5f);
-        PaleAutomatonPlugin.terrainCollider.SetActive(false);
-        yield return new WaitForSeconds(0.5f);
-        PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
-        PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
     }
     public static IEnumerator Phase2Transition()
     {
@@ -236,9 +207,42 @@ public static class CustomBehaviour
             PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
         }
     }
+    public static IEnumerator Phase3Transition()
+    {
+        yield return Teleport(100, 100, "First Idle");
+        PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
+        yield return new WaitForSeconds(1);
+        var groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
+        groundSpikesCollider.name = "GroundSpikesCollider";
+        groundSpikesCollider.layer = LayerMask.NameToLayer("Enemies");
+        var damageHero = groundSpikesCollider.GetComponent<DamageHero>();
+        damageHero.SetDamageAmount(2);
+        damageHero.hazardType = HazardType.NON_HAZARD;
+        var collider = groundSpikesCollider.GetComponent<PolygonCollider2D>();
+        collider.name = "GroundSpikeColliderComponent";
+        collider.SetPath(0, new List<Vector2>()
+        {
+            new(0, 0),
+            new(0, 1),
+            new(1, 1),
+            new(1, 0),
+        });
+        groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with {y = 12.5f};
+        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { y = 180 };
+        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { x = 30 };
+        PaleAutomatonPlugin.groundSpikesParent.SetActive(true);
+        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.terrainCollider.SetActive(false);
+        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
+        PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
+    }
     public static IEnumerator SelectPhase3Attack()
     {
-        yield return Random.Range(1, 6) switch
+        PaleAutomatonPlugin.controlFsm.FsmVariables.GetFsmFloat("Gravity").Value = 0;
+        PaleAutomatonPlugin.controlFsm.SetState("First Idle");
+        yield return new WaitForSeconds(0.5f);
+        yield return /*Random.Range(1, 6)*/ 5 switch
         {
             1 => WindSlashSpam(),
             2 => DashSlashIntoCrossSlash(),
@@ -255,10 +259,33 @@ public static class CustomBehaviour
     //? 4: triple windslash > new attack
     public static IEnumerator WindSlashSpam()
     {
-        var xOffset = Random.Range(5f, 7f) * (Random.value > 0.5f ? -1 : 1);
-        var yOffset = Random.Range(0f, 4f) * (Random.value > 0.5f ? -1 : 1);
+        var direction = Random.value > 0.5f ? -1 : 1;
+        var xOffset = Random.Range(10f, 13f) * direction;
+        var yOffset = Random.Range(-4f, 1f);
         var hcPos = HeroController.instance.transform.position;
         yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A");
+        yield return new WaitForSeconds(0.6f);
+        PaleAutomatonPlugin.controlFsm.SetState("WindSlash");
+        yield return new WaitForSeconds(0.2f);
+        xOffset = Random.Range(10f, 13f) * -direction;
+        yOffset = Random.Range(-4f, 1f);
+        hcPos = HeroController.instance.transform.position;
+        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A");
+        yield return new WaitForSeconds(0.6f);
+        xOffset = Random.Range(10f, 13f) * direction;
+        yOffset = Random.Range(-4f, 1f);
+        hcPos = HeroController.instance.transform.position;
+        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A");
+        yield return new WaitForSeconds(0.6f);
+        xOffset = Random.Range(10f, 13f) * -direction;
+        yOffset = Random.Range(-4f, 1f);
+        hcPos = HeroController.instance.transform.position;
+        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A");
+        yield return new WaitForSeconds(0.6f);
+        PaleAutomatonPlugin.controlFsm.SetState("WindSlash");
+        yield return new WaitForSeconds(0.2f);
+        PaleAutomatonPlugin.controlFsm.SetState("WindSlash");
+        yield return new WaitForSeconds(0.2f);
     }
     //? 1: dash slash > cross slash on hornet > tp
     //? 2: dash slash > cross slash on hornet > tp
@@ -266,7 +293,8 @@ public static class CustomBehaviour
     public static IEnumerator DashSlashIntoCrossSlash()
     {
         var hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName);
+        yield return Teleport(hcPos.x, hcPos.y, "DashStab Antic");
+        yield return new WaitForSeconds(0.2f);
     }
     //? 1: charge a long cross slash
     //? 2: a bunch of cross slash telegraphs spawn randomly
@@ -274,7 +302,8 @@ public static class CustomBehaviour
     public static IEnumerator CrossSlashSpam()
     {
         var hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName);
+        yield return Teleport(hcPos.x, hcPos.y, "CS Jump Antic");
+        yield return new WaitForSeconds(0.2f);
     }
     //? 1: dive > tp on opposite direction
     //? 2: dive > tp above hornet
@@ -282,7 +311,8 @@ public static class CustomBehaviour
     public static IEnumerator TripleDive()
     {
         var hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName);
+        yield return Teleport(hcPos.x, hcPos.y, "Dive Dir");
+        yield return new WaitForSeconds(0.2f);
     }
     //? 1: diagonal rising slash from bottom > tp opposite direction
     //? 2: diagonal rising slash from bottom > tp below hornet
@@ -290,7 +320,31 @@ public static class CustomBehaviour
     //? 4: stab flurry or windslash or dive straight down > new attack
     public static IEnumerator TripleRisingSlash()
     {
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 40;
+        var direction = Random.value > 0.5f ? -1 : 1;
         var hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName);
+        PaleAutomatonPlugin.songKnight.GetComponent<Rigidbody2D>().linearVelocityY = 0;
+        yield return Teleport(hcPos.x + 4 * direction, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.4f);
+        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.controlFsm.SetState("CrossSlash 1");
+        yield return new WaitForSeconds(0.2f);
+        hcPos = HeroController.instance.transform.position;
+        PaleAutomatonPlugin.songKnight.GetComponent<Rigidbody2D>().linearVelocityY = 0;
+        yield return Teleport(hcPos.x + 4 * -direction, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.4f);
+        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.controlFsm.SetState("CrossSlash 1");
+        yield return new WaitForSeconds(0.2f);
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = 0;
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 90;
+        hcPos = HeroController.instance.transform.position;
+        PaleAutomatonPlugin.songKnight.GetComponent<Rigidbody2D>().linearVelocityY = 0;
+        yield return Teleport(hcPos.x, hcPos.y - 9, "Rising Slash Antic", finishNextStateIn: 0.4f);
+        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
+        yield return new WaitForSeconds(0.2f);
+        PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -80;
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 15;
+        yield return new WaitForSeconds(0.2f);
     }
 }

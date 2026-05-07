@@ -186,6 +186,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         }
         songKnight.transform.Find("Rising Slash").transform.localScale = new Vector3(1, 1.8f, 1);
         songKnight.transform.Find("RapidSlash Collider").transform.localScale = new Vector3(1.2f, 1f, 1);
+        foreach (var tk2dsprite in songKnight.GetComponentsInChildren<tk2dSprite>(true)) tk2dsprite.renderLayer = 500;
         var finalHitOriginal = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(g => g.name == "Boss Death FinalHit")!;
         CustomBehaviour.tpEffectSetup = Instantiate(finalHitOriginal);
         CustomBehaviour.tpEffectSetup.SetActive(false);
@@ -294,6 +295,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("Dash Slash End")!.AddMethod(() => Instance.StartCoroutine(Helpers.ScheduleNextState(0.25f, "Stab 3")));
         controlFsm.GetState("WindSlash")!.AddMethod(() =>
         {
+            if (PHASE_3) return;
             if (customComboSequence) return;
             if (!windslashGround) Instance.StartCoroutine(CustomBehaviour.DoubleWindslashStarter());
             else if (!dashToWindslashFollowup)
@@ -306,6 +308,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         });
         controlFsm.GetState("Stab End 2")!.AddMethod(() =>
         {
+            if (PHASE_3) return;
             if (customComboSequence) return;
             if (!dashToWindslashFollowup)
             {
@@ -315,15 +318,48 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             }
             else dashToWindslashFollowup = false;
         });
-        controlFsm.GetState("Rising Slash")!.AddMethod(() => { if (customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.RisingSlashStarter()); });
-        controlFsm.GetState("Dive Land")!.AddMethod(() => { if (customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.DiveStarter()); });
-        controlFsm.GetState("Dash Slash End 2")!.AddMethod(() => { if (!rapidSlashFollowupAllowed || !customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup()); });
-        controlFsm.GetState("Rapid Slash End")!.AddMethod(() => { if (!rapidSlashFollowupAllowed || !customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup()); });
-        controlFsm.GetState("CrossSlash Recoil")!.AddMethod(() => { if (customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.CrossSlashStarter()); });
+        controlFsm.GetState("Rising Slash")!.AddMethod(() =>
+        {
+            if (PHASE_3) return;
+            if (customComboSequence) return;
+            Instance.StartCoroutine(CustomBehaviour.RisingSlashStarter());
+        });
+        controlFsm.GetState("Dive Land")!.AddMethod(() =>
+        {
+            if (PHASE_3) return;
+            if (customComboSequence) return;
+            Instance.StartCoroutine(CustomBehaviour.DiveStarter());
+        });
+        controlFsm.GetState("Dash Slash End 2")!.AddMethod(() =>
+        {
+            if (PHASE_3) return;
+            if (!rapidSlashFollowupAllowed || !customComboSequence) return;
+            Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup());
+        });
+        controlFsm.GetState("Rapid Slash End")!.AddMethod(() =>
+        {
+            if (PHASE_3) return;
+            if (!rapidSlashFollowupAllowed || !customComboSequence) return;
+            Instance.StartCoroutine(CustomBehaviour.RapidSlashFollowup());
+        });
+        controlFsm.GetState("CrossSlash Recoil")!.AddMethod(() =>
+        {
+            if (PHASE_3) return;
+            if (customComboSequence) return;
+            Instance.StartCoroutine(CustomBehaviour.CrossSlashStarter());
+        });
         controlFsm.GetState("Jump Antic")!.AddAction(new Wait { time = 0.01f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetFirstActionOfType<SetFloatValue>("Set Wind Slash")!.floatValue = 9;
     }
     public static void SetupPhase3()
     {
+        controlFsm.GetState("First Idle")!.AddAction(new DecelerateXY
+        {
+            gameObject = controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.gameObject,
+            decelerationX = 0.7f,
+            decelerationY = 0.7f,
+            brakeOnExit = true
+        });
+        controlFsm.GetFirstActionOfType<Wait>("WindSlash Antic")!.time = 0.6f;
     }
 }

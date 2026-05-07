@@ -59,10 +59,10 @@ public static class Patches
             PaleAutomatonPlugin.Instance.StartCoroutine(PaleAutomatonPlugin.damageHero.NailClash(0, "Nail Attack", PaleAutomatonPlugin.songKnight.transform.position));
             GameManager.instance.FreezeMoment(FreezeMomentTypes.NailClashEffect);
         }
-        else if (PaleAutomatonPlugin.controlFsm.ActiveStateName.Contains("Antic") && PaleAutomatonPlugin.controlFsm.ActiveStateName is not "Dash Slash Antic" && !PaleAutomatonPlugin.customComboSequence)
-        {
-            PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.AnticParry());
-        }
+        else if (PaleAutomatonPlugin.controlFsm.ActiveStateName.Contains("Antic") &&
+                 PaleAutomatonPlugin.controlFsm.ActiveStateName is not "Dash Slash Antic" &&
+                 !PaleAutomatonPlugin.customComboSequence &&
+                 !PaleAutomatonPlugin.PHASE_3) PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.AnticParry());
     }
     [HarmonyPostfix]
     [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.NailClash))]
@@ -92,5 +92,12 @@ public static class Patches
             if (PaleAutomatonPlugin.healthManager.hp - damage > PaleAutomatonPlugin.PHASE_2_THRESHOLD) PaleAutomatonPlugin.healthManager.hp -= damage;
             else PaleAutomatonPlugin.healthManager.hp = PaleAutomatonPlugin.PHASE_2_THRESHOLD;
         }
+    }
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.OnEnable))]
+    private static void DamageHero_OnEnable(DamageHero __instance)
+    {
+        if (!PaleAutomatonPlugin.bossScene) return;
+        if (__instance.name == "Song Knight") __instance.enabled = false;
     }
 }
