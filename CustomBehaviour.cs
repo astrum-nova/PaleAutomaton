@@ -1,12 +1,14 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using GenericVariableExtension;
 using GlobalEnums;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace PaleAutomaton;
 
@@ -53,9 +55,9 @@ public static class CustomBehaviour
     }
     public static IEnumerator Phase3Transition()
     {
-        var hcPos = HeroController.instance.transform.position;
-        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName, 3));
-        yield return new WaitForSeconds(2);
+        yield return Teleport(-50, 100, "First Idle");
+        PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
+        yield return new WaitForSeconds(1);
         var groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
         groundSpikesCollider.name = "GroundSpikesCollider";
         groundSpikesCollider.layer = LayerMask.NameToLayer("Enemies");
@@ -71,9 +73,15 @@ public static class CustomBehaviour
             new(1, 1),
             new(1, 0),
         });
-        groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with {y = 11.5f};
+        groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with {y = 12.5f};
         groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { y = 180 };
+        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { x = 30 };
         PaleAutomatonPlugin.groundSpikesParent.SetActive(true);
+        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.terrainCollider.SetActive(false);
+        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
+        PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
     }
     public static IEnumerator Phase2Transition()
     {
@@ -227,5 +235,62 @@ public static class CustomBehaviour
             yield return new WaitForSeconds(finishNextStateIn);
             PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
         }
+    }
+    public static IEnumerator SelectPhase3Attack()
+    {
+        yield return Random.Range(1, 6) switch
+        {
+            1 => WindSlashSpam(),
+            2 => DashSlashIntoCrossSlash(),
+            3 => CrossSlashSpam(),
+            4 => TripleDive(),
+            5 => TripleRisingSlash(),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+        if (PaleAutomatonPlugin.songKnight) PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
+    }
+    //? 1: double windslash > tp
+    //? 2: single windslash > tp
+    //? 3: single windslash > tp
+    //? 4: triple windslash > new attack
+    public static IEnumerator WindSlashSpam()
+    {
+        var xOffset = Random.Range(5f, 7f) * (Random.value > 0.5f ? -1 : 1);
+        var yOffset = Random.Range(0f, 4f) * (Random.value > 0.5f ? -1 : 1);
+        var hcPos = HeroController.instance.transform.position;
+        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A");
+    }
+    //? 1: dash slash > cross slash on hornet > tp
+    //? 2: dash slash > cross slash on hornet > tp
+    //? 3: stab flurry or windslash > new attack
+    public static IEnumerator DashSlashIntoCrossSlash()
+    {
+        var hcPos = HeroController.instance.transform.position;
+        yield return Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName);
+    }
+    //? 1: charge a long cross slash
+    //? 2: a bunch of cross slash telegraphs spawn randomly
+    //? 3: trigger all the cross slashes > new attack
+    public static IEnumerator CrossSlashSpam()
+    {
+        var hcPos = HeroController.instance.transform.position;
+        yield return Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName);
+    }
+    //? 1: dive > tp on opposite direction
+    //? 2: dive > tp above hornet
+    //? 3: dive straight down > new attack
+    public static IEnumerator TripleDive()
+    {
+        var hcPos = HeroController.instance.transform.position;
+        yield return Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName);
+    }
+    //? 1: diagonal rising slash from bottom > tp opposite direction
+    //? 2: diagonal rising slash from bottom > tp below hornet
+    //? 3: rising slash up
+    //? 4: stab flurry or windslash or dive straight down > new attack
+    public static IEnumerator TripleRisingSlash()
+    {
+        var hcPos = HeroController.instance.transform.position;
+        yield return Teleport(hcPos.x + 6, hcPos.y + 3, PaleAutomatonPlugin.controlFsm.ActiveStateName);
     }
 }

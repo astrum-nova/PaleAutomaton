@@ -26,6 +26,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static GameObject songKnight = null!;
     public static GameObject groundSpikesSetup = null!;
     public static GameObject groundSpikesParent = null!;
+    public static GameObject terrainCollider = null!;
     public static PlayMakerFSM controlFsm = null!;
     public static HealthManager healthManager = null!;
     public static DamageHero damageHero = null!;
@@ -76,6 +77,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
                     if (rootGameObject.name.EndsWith("(10)")) rootGameObject.transform.position = rootGameObject.transform.position with { x = 129 };
                     else Destroy(rootGameObject);
                 }
+
+                if (rootGameObject.name == "terrain collider") terrainCollider = rootGameObject;
             }
             Destroy(GameObject.Find("citadel_bat_swarms"));
             Destroy(GameObject.Find("bat swarm_bg_left")!);
@@ -201,11 +204,11 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             SetupPhase2();
             return true;
         }
-
         if (healthManager.hp <= PHASE_3_THRESHOLD && !PHASE_3)
         {
             PHASE_3 = true;
             Instance.StartCoroutine(CustomBehaviour.Phase3Transition());
+            SetupPhase3();
             return true;
         }
         return false;
@@ -319,5 +322,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("CrossSlash Recoil")!.AddMethod(() => { if (customComboSequence) return; Instance.StartCoroutine(CustomBehaviour.CrossSlashStarter()); });
         controlFsm.GetState("Jump Antic")!.AddAction(new Wait { time = 0.01f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetFirstActionOfType<SetFloatValue>("Set Wind Slash")!.floatValue = 9;
+    }
+    public static void SetupPhase3()
+    {
     }
 }
