@@ -2,6 +2,7 @@
 using GlobalEnums;
 using HarmonyLib;
 using HutongGames.PlayMaker.Actions;
+using Silksong.FsmUtil;
 using TeamCherry.Localization;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -35,9 +36,18 @@ public static class Patches
         {
             spawned.localScale = new Vector3(2.50f, 2.50f, 1.00f);
             Helpers.MakeProjectileRenderAboveWalls(__instance.storeObject.Value);
+            spawned.name = "MODIFIED";
+            if (!CustomBehaviour.crossSlashSetup)
+            {
+                CustomBehaviour.crossSlashSetup = Object.Instantiate(go);
+                CustomBehaviour.crossSlashSetup.SetActive(false);
+                CustomBehaviour.crossSlashSetup.name = "CrossSlashSetup";
+                var csFsm = CustomBehaviour.crossSlashSetup.GetComponent<PlayMakerFSM>();
+                csFsm.GetState("Recycle")!.RemoveActionsOfType<RecycleSelf>();
+            }
         } else if (spawned.name.StartsWith("Song Knight Projectile"))
         {
-            Object.Destroy(go);
+            go.SetActive(false);
             PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.SpawnWindSlash());
         }
     }

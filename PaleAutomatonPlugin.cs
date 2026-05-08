@@ -184,12 +184,15 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             hitbox.GetComponent<PolygonCollider2D>().SetPath(0, mainHitbox);
             hitbox.transform.localScale = new Vector3(1, 2, 1);
         }
+        CustomBehaviour.rb = songKnight.GetComponent<Rigidbody2D>();
         songKnight.transform.Find("Rising Slash").transform.localScale = new Vector3(1, 1.8f, 1);
         songKnight.transform.Find("RapidSlash Collider").transform.localScale = new Vector3(1.2f, 1f, 1);
         foreach (var tk2dsprite in songKnight.GetComponentsInChildren<tk2dSprite>(true)) tk2dsprite.renderLayer = 500;
-        var finalHitOriginal = Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(g => g.name == "Boss Death FinalHit")!;
-        CustomBehaviour.tpEffectSetup = Instantiate(finalHitOriginal);
+        CustomBehaviour.tpEffectSetup = Instantiate(Resources.FindObjectsOfTypeAll<GameObject>().FirstOrDefault(g => g.name == "Boss Death FinalHit")!);
         CustomBehaviour.tpEffectSetup.SetActive(false);
+        songKnight.transform.GetChild(27).localScale = new Vector3(2.5f, 2.5f, 1);
+        CustomBehaviour.crossSlashAnticSetup = Instantiate(songKnight.transform.GetChild(27).gameObject);
+        CustomBehaviour.crossSlashAnticSetup.SetActive(false);
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("white_solid").gameObject);
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Slash").gameObject);
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Strike L").gameObject);
@@ -205,7 +208,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             SetupPhase2();
             return true;
         }
-        if (healthManager.hp <= PHASE_3_THRESHOLD && !PHASE_3)
+        if (healthManager.hp <= PHASE_3_THRESHOLD && !PHASE_3 && CustomBehaviour.crossSlashSetup)
         {
             PHASE_3 = true;
             Instance.StartCoroutine(CustomBehaviour.Phase3Transition());
@@ -353,6 +356,17 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     }
     public static void SetupPhase3()
     {
+        controlFsm.GetState("CS Antic")!.AddAction(new FaceObjectV2
+        {
+            objectA = controlFsm.GetFirstActionOfType<FaceObjectV2>("CS Jump Antic")!.objectA,
+            objectB = controlFsm.GetFirstActionOfType<FaceObjectV2>("CS Jump Antic")!.objectB,
+            spriteFacesRight = false,
+            playNewAnimation = false,
+            newAnimationClip = "",
+            resetFrame = false,
+            everyFrame = false,
+            pauseBetweenTurns = 0
+        });
         controlFsm.GetState("First Idle")!.AddAction(new DecelerateXY
         {
             gameObject = controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.gameObject,

@@ -9,9 +9,13 @@ public static class Pools
     private static GameObject pooledObjectsParent = new("Pooled Objects Parent");
     private static readonly List<GameObject> windSlashes = [];
     private static readonly List<GameObject> tpEffects = [];
+    private static readonly List<GameObject> crossSlashes = [];
+    private static readonly List<GameObject> crossSlashAntics = [];
 
     public static GameObject GetWindSlash() => GetPooledObject(windSlashes, CustomBehaviour.skProjectileSetup);
     public static GameObject GetTpEffect() => GetPooledObject(tpEffects, CustomBehaviour.tpEffectSetup);
+    public static GameObject GetCrossSlash() => GetPooledObject(crossSlashes, CustomBehaviour.crossSlashSetup);
+    public static GameObject GetCrossSlashAntic() => GetPooledObject(crossSlashAntics, CustomBehaviour.crossSlashAnticSetup);
 
     private static GameObject GetPooledObject(List<GameObject> pool, GameObject setup)
     {
@@ -39,5 +43,7 @@ public static class Pools
         Object.DontDestroyOnLoad(pooledObjectsParent);
         windSlashes.Clear();
         tpEffects.Clear();
+        crossSlashes.Clear();
+        crossSlashAntics.Clear();
     }
 }

@@ -18,6 +18,9 @@ public static class CustomBehaviour
     public static ManagedAsset<GameObject> SK_PROJECTILE_ASSET = null!;
     public static GameObject skProjectileSetup = null!;
     public static GameObject tpEffectSetup = null!;
+    public static GameObject crossSlashSetup = null!;
+    public static GameObject crossSlashAnticSetup = null!;
+    public static Rigidbody2D rb = null!;
     public static IEnumerator SpawnWindSlash()
     {
         if (!skProjectileSetup)
@@ -191,6 +194,8 @@ public static class CustomBehaviour
     }
     public static IEnumerator Teleport(float x, float y, string nextState, float delay = 0.2f, float finishNextStateIn = -1)
     {
+        rb.linearVelocityY = 0;
+        rb.linearVelocityX = 0;
         PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = true;
         var transform = PaleAutomatonPlugin.songKnight.transform;
         PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
@@ -206,6 +211,35 @@ public static class CustomBehaviour
             yield return new WaitForSeconds(finishNextStateIn);
             PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
         }
+    }
+    public static IEnumerator SpawnCrossSlash(float x, float y, float startDelay, float activationDelay, bool randomizePosition = false)
+    {
+        var xOffset = randomizePosition ? Random.Range(-2, 2) : 0;
+        var yOffset = randomizePosition ? Random.Range(-2, 2) : 0;
+        var rotationOffset = 90 + (randomizePosition ? Random.Range(-10, 10) : 0);
+        var scaleModifier = Random.Range(1.5f, 1.8f);
+        yield return new WaitForSeconds(startDelay);
+        var antic = Pools.GetCrossSlashAntic();
+        antic.transform.localScale = new Vector3(1, 1, 1);
+        antic.SetActive(true);
+        antic.transform.position = new Vector3(x + xOffset, y + yOffset, antic.transform.position.z);
+        antic.transform.localScale *= scaleModifier;
+        antic.transform.localScale = antic.transform.localScale with { x = PaleAutomatonPlugin.songKnight.transform.localScale.x };
+        antic.transform.SetRotation2D(rotationOffset);
+        //todo: remember to prewarm the antic in the pool maybe, same with the crosslashes themselves
+        yield return new WaitForSeconds(activationDelay);
+        antic.SetActive(false);
+        var crossSlash = Pools.GetCrossSlash();
+        crossSlash.transform.localScale = new Vector3(1, 1, 1);
+        try { crossSlash.GetComponent<PlayMakerFSM>().GetState("Recycle")!.RemoveActionsOfType<RecycleSelf>(); }
+        catch { /*ignored*/ }
+        crossSlash.SetActive(true);
+        crossSlash.transform.position = new Vector3(x + xOffset, y + yOffset, antic.transform.position.z);
+        crossSlash.transform.localScale *= scaleModifier;
+        crossSlash.transform.localScale = crossSlash.transform.localScale with { x = PaleAutomatonPlugin.songKnight.transform.localScale.x };
+        crossSlash.transform.SetRotation2D(rotationOffset);
+        yield return new WaitForSeconds(0.3f);
+        crossSlash.SetActive(false);
     }
     public static IEnumerator Phase3Transition()
     {
@@ -227,9 +261,9 @@ public static class CustomBehaviour
             new(1, 1),
             new(1, 0),
         });
-        groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with {y = 12.5f};
+        groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with { y = 12.5f };
         groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { y = 180 };
-        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { x = 30 };
+        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { x = 16.4f };
         PaleAutomatonPlugin.groundSpikesParent.SetActive(true);
         yield return new WaitForSeconds(0.5f);
         PaleAutomatonPlugin.terrainCollider.SetActive(false);
@@ -239,10 +273,11 @@ public static class CustomBehaviour
     }
     public static IEnumerator SelectPhase3Attack()
     {
+        if (!PaleAutomatonPlugin.bossScene) yield break;
         PaleAutomatonPlugin.controlFsm.FsmVariables.GetFsmFloat("Gravity").Value = 0;
         PaleAutomatonPlugin.controlFsm.SetState("First Idle");
         yield return new WaitForSeconds(0.5f);
-        yield return /*Random.Range(1, 6)*/ 5 switch
+        yield return /*Random.Range(1, 6)*/ 3 switch
         {
             1 => WindSlashSpam(),
             2 => DashSlashIntoCrossSlash(),
@@ -301,9 +336,17 @@ public static class CustomBehaviour
     //? 3: trigger all the cross slashes > new attack
     public static IEnumerator CrossSlashSpam()
     {
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<Wait>("CS Antic")!.time = 1;
+        var direction = Random.value > 0.5f ? -1 : 1;
         var hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x, hcPos.y, "CS Jump Antic");
-        yield return new WaitForSeconds(0.2f);
+        yield return Teleport(hcPos.x + 3 * direction, hcPos.y + 2, "CS Antic");
+        //todo: randomize the order in which these happen
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 7, hcPos.y - 5, 0.1f, 1f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 7, hcPos.y - 5, 0.2f, 0.95f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 10, hcPos.y + 0, 0.3f, 0.9f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 10, hcPos.y + 0, 0.4f, 0.85f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 0, hcPos.y + 8, 0.5f, 0.8f, true));
+        yield return new WaitForSeconds(1.2f);
     }
     //? 1: dive > tp on opposite direction
     //? 2: dive > tp above hornet
@@ -323,24 +366,28 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 40;
         var direction = Random.value > 0.5f ? -1 : 1;
         var hcPos = HeroController.instance.transform.position;
-        PaleAutomatonPlugin.songKnight.GetComponent<Rigidbody2D>().linearVelocityY = 0;
         yield return Teleport(hcPos.x + 4 * direction, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.4f);
         yield return new WaitForSeconds(0.5f);
         PaleAutomatonPlugin.controlFsm.SetState("CrossSlash 1");
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.1f);
         hcPos = HeroController.instance.transform.position;
-        PaleAutomatonPlugin.songKnight.GetComponent<Rigidbody2D>().linearVelocityY = 0;
         yield return Teleport(hcPos.x + 4 * -direction, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.4f);
         yield return new WaitForSeconds(0.5f);
         PaleAutomatonPlugin.controlFsm.SetState("CrossSlash 1");
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.1f);
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = 0;
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 90;
         hcPos = HeroController.instance.transform.position;
-        PaleAutomatonPlugin.songKnight.GetComponent<Rigidbody2D>().linearVelocityY = 0;
-        yield return Teleport(hcPos.x, hcPos.y - 9, "Rising Slash Antic", finishNextStateIn: 0.4f);
+        yield return Teleport(hcPos.x, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.4f);
         yield return new WaitForSeconds(0.5f);
-        PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
+        if (Random.value > 0.5f || true)
+        {
+            PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
+        }
+        else
+        {
+            //todo: dive straight down
+        }
         yield return new WaitForSeconds(0.2f);
         PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -80;
