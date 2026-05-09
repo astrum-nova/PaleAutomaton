@@ -111,6 +111,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             shifted.transform.GetChild(7).transform.position = shifted.transform.GetChild(7).transform.position with { z = -1.4537f };
         }
         groundSpikesParent.SetActive(false);
+        
     }
     private static IEnumerator FancyZoomOut(float duration, float targetZoom)
     {

@@ -36,7 +36,7 @@ public static class Patches
         {
             spawned.localScale = new Vector3(2.50f, 2.50f, 1.00f);
             Helpers.MakeProjectileRenderAboveWalls(__instance.storeObject.Value);
-            spawned.name = "MODIFIED";
+            spawned.name = "CrossSlashSetup";
             if (!CustomBehaviour.crossSlashSetup)
             {
                 CustomBehaviour.crossSlashSetup = Object.Instantiate(go);
@@ -73,6 +73,14 @@ public static class Patches
                  PaleAutomatonPlugin.controlFsm.ActiveStateName is not "Dash Slash Antic" &&
                  !PaleAutomatonPlugin.customComboSequence &&
                  !PaleAutomatonPlugin.PHASE_3) PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.AnticParry());
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.NailClash))]
+    private static void DamageHero_NailClash_Prefix(DamageHero __instance)
+    {
+        Debug.Log(__instance.transform.parent.gameObject.name);
+        if (__instance.transform.parent.gameObject.name.StartsWith("CrossSlashSetup")) HeroController.instance.StartInvulnerable(0.1f);
     }
     [HarmonyPostfix]
     [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.NailClash))]

@@ -217,7 +217,7 @@ public static class CustomBehaviour
         var xOffset = randomizePosition ? Random.Range(-2, 2) : 0;
         var yOffset = randomizePosition ? Random.Range(-2, 2) : 0;
         var rotationOffset = 90 + (randomizePosition ? Random.Range(-10, 10) : 0);
-        var scaleModifier = Random.Range(1.5f, 1.8f);
+        var scaleModifier = Random.Range(2f, 2.3f);
         yield return new WaitForSeconds(startDelay);
         var antic = Pools.GetCrossSlashAntic();
         antic.transform.localScale = new Vector3(1, 1, 1);
@@ -274,19 +274,21 @@ public static class CustomBehaviour
     public static IEnumerator SelectPhase3Attack()
     {
         if (!PaleAutomatonPlugin.bossScene) yield break;
-        PaleAutomatonPlugin.controlFsm.FsmVariables.GetFsmFloat("Gravity").Value = 0;
-        PaleAutomatonPlugin.controlFsm.SetState("First Idle");
-        yield return new WaitForSeconds(0.5f);
-        yield return /*Random.Range(1, 6)*/ 3 switch
+        while (PaleAutomatonPlugin.songKnight)
         {
-            1 => WindSlashSpam(),
-            2 => DashSlashIntoCrossSlash(),
-            3 => CrossSlashSpam(),
-            4 => TripleDive(),
-            5 => TripleRisingSlash(),
-            _ => throw new ArgumentOutOfRangeException()
-        };
-        if (PaleAutomatonPlugin.songKnight) PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
+            PaleAutomatonPlugin.controlFsm.FsmVariables.GetFsmFloat("Gravity").Value = 0;
+            PaleAutomatonPlugin.controlFsm.SetState("First Idle");
+            yield return new WaitForSeconds(0.5f);
+            yield return /*Random.Range(1, 6)*/ 3 switch
+            {
+                1 => WindSlashSpam(),
+                2 => DashSlashIntoCrossSlash(),
+                3 => CrossSlashSpam(),
+                4 => TripleDive(),
+                5 => TripleRisingSlash(),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
     }
     //? 1: double windslash > tp
     //? 2: single windslash > tp
