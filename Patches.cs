@@ -79,8 +79,12 @@ public static class Patches
     [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.NailClash))]
     private static void DamageHero_NailClash_Prefix(DamageHero __instance)
     {
-        Debug.Log(__instance.transform.parent.gameObject.name);
-        if (__instance.transform.parent.gameObject.name.StartsWith("CrossSlashSetup")) HeroController.instance.StartInvulnerable(0.1f);
+        if (CustomBehaviour.csSpam)
+        if (__instance.transform.parent.gameObject.name.StartsWith("CrossSlashSetup"))
+        {
+            HeroController.instance.StartInvulnerable(0.15f);
+            HeroController.instance.invulnerableDuration = 0.15f;
+        }
     }
     [HarmonyPostfix]
     [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.NailClash))]

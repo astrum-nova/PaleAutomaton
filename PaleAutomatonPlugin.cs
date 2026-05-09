@@ -64,6 +64,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             PHASE_3 = false;
             PHASE_4 = false;
             windslashGround = false;
+            CustomBehaviour.csSpam = false;
             var quest = GameObject.Find("Merchant Quest Parent")!;
             if (quest.transform.GetChild(0).gameObject.activeSelf) return; //! REMEMBER TO PLAYTEST THIS
             quest.SetActive(false);

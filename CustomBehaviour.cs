@@ -21,6 +21,7 @@ public static class CustomBehaviour
     public static GameObject crossSlashSetup = null!;
     public static GameObject crossSlashAnticSetup = null!;
     public static Rigidbody2D rb = null!;
+    public static bool csSpam = false;
     public static IEnumerator SpawnWindSlash()
     {
         if (!skProjectileSetup)
@@ -227,7 +228,7 @@ public static class CustomBehaviour
         antic.transform.localScale = antic.transform.localScale with { x = PaleAutomatonPlugin.songKnight.transform.localScale.x };
         antic.transform.SetRotation2D(rotationOffset);
         //todo: remember to prewarm the antic in the pool maybe, same with the crosslashes themselves
-        yield return new WaitForSeconds(activationDelay);
+        yield return new WaitForSeconds(activationDelay - startDelay);
         antic.SetActive(false);
         var crossSlash = Pools.GetCrossSlash();
         crossSlash.transform.localScale = new Vector3(1, 1, 1);
@@ -338,17 +339,20 @@ public static class CustomBehaviour
     //? 3: trigger all the cross slashes > new attack
     public static IEnumerator CrossSlashSpam()
     {
-        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<Wait>("CS Antic")!.time = 1;
+        var anticTime = 0.8f;
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<Wait>("CS Antic")!.time = anticTime;
         var direction = Random.value > 0.5f ? -1 : 1;
         var hcPos = HeroController.instance.transform.position;
         yield return Teleport(hcPos.x + 3 * direction, hcPos.y + 2, "CS Antic");
+        csSpam = true;
         //todo: randomize the order in which these happen
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 7, hcPos.y - 5, 0.1f, 1f, true));
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 7, hcPos.y - 5, 0.2f, 0.95f, true));
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 10, hcPos.y + 0, 0.3f, 0.9f, true));
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 10, hcPos.y + 0, 0.4f, 0.85f, true));
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 0, hcPos.y + 8, 0.5f, 0.8f, true));
-        yield return new WaitForSeconds(1.2f);
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 7, hcPos.y - 5, 0.1f, anticTime + 0.014f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 7, hcPos.y - 5, 0.2f, anticTime + 0.015f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 10, hcPos.y + 0, 0.3f, anticTime + 0.012f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 10, hcPos.y + 0, 0.4f, anticTime + 0.013f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 0, hcPos.y + 8, 0.5f, anticTime + 0.011f, true));
+        yield return new WaitForSeconds(anticTime + 0.2f);
+        csSpam = false;
     }
     //? 1: dive > tp on opposite direction
     //? 2: dive > tp above hornet
