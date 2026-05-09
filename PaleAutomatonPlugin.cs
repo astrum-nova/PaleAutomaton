@@ -132,6 +132,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         yield return BIG_TITLE.Load();
         var bigTitle = BIG_TITLE.InstantiateAsset();
         var bigTitleFsm = bigTitle.GetComponent<PlayMakerFSM>();
+        bigTitleFsm.GetState("Flash Effect")!.RemoveActionsOfType<ApplyMusicCue>();
+        bigTitleFsm.GetState("Flash Effect")!.RemoveActionsOfType<TransitionToAudioSnapshot>();
         bigTitleFsm.SendEvent("TITLE UP");
         //? The text object of the title is disabled cause GMS uses a custom image, we destroy the image to use custom text
         Destroy(bigTitle.transform.GetChild(1).GetChild(2).gameObject);
@@ -246,7 +248,17 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
                 "Do Move"));
             */
         });
-        controlFsm.GetState("DashStab Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -Helpers.GetAdaptedSpeed(25, 230, 330), 0);
+        controlFsm.GetState("DashStab Dash")!.InsertMethod(() =>
+        {
+            var speed = Helpers.GetAdaptedSpeed(25, 230, 330);
+            if (!PHASE_3) controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -speed;
+            else
+            {
+                var direction = Helpers.GetNormalizedDirection();
+                controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = direction.x * -speed;
+                controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.ySpeed = direction.y * speed;
+            }
+        }, 0);
         controlFsm.GetState("DashStab Dash")!.AddAction(new ActivateGameObject
         {
             gameObject = controlFsm.GetFirstActionOfType<ActivateGameObject>("Stab 1")!.gameObject,
@@ -284,9 +296,39 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static void SetupPhase2()
     {
         controlFsm.GetState("Dash to CS?")!.InsertMethod(() => controlFsm.SendEvent("FINISHED"), 0);
-        controlFsm.GetState("DashStab Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -Helpers.GetAdaptedSpeed(35, 260, 870), 0);
-        controlFsm.GetState("Dash Slash Antic")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash Antic")!.speed = -Helpers.GetAdaptedSpeed(12.5f, 110, 210), 0);
-        controlFsm.GetState("Stab 3")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Stab 3")!.speed = -Helpers.GetAdaptedSpeed(25f, 250, 300), 0);
+        controlFsm.GetState("DashStab Dash")!.InsertMethod(() =>
+        {
+            var speed = Helpers.GetAdaptedSpeed(35, 260, 870);
+            if (!PHASE_3) controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = -speed;
+            else
+            {
+                var direction = Helpers.GetNormalizedDirection();
+                controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = direction.x * -speed;
+                controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.ySpeed = direction.y * speed;
+            }
+        }, 0);
+        controlFsm.GetState("Dash Slash Antic")!.InsertMethod(() =>
+        {
+            var speed = Helpers.GetAdaptedSpeed(12.5f, 110, 210);
+            if (!PHASE_3) controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash Antic")!.speed = -speed;
+            else
+            {
+                var direction = Helpers.GetNormalizedDirection();
+                controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash Antic")!.speed = direction.x * -speed;
+                controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash Antic")!.ySpeed = direction.y * speed;
+            }
+        }, 0);
+        controlFsm.GetState("Stab 3")!.InsertMethod(() =>
+        {
+            var speed = Helpers.GetAdaptedSpeed(25f, 250, 300);
+            if (!PHASE_3) controlFsm.GetFirstActionOfType<SetVelocityByScale>("Stab 3")!.speed = -speed;
+            else
+            {
+                var direction = Helpers.GetNormalizedDirection();
+                controlFsm.GetFirstActionOfType<SetVelocityByScale>("Stab 3")!.speed = direction.x * -speed;
+                controlFsm.GetFirstActionOfType<SetVelocityByScale>("Stab 3")!.ySpeed = direction.y * speed;
+            }
+        }, 0);
         controlFsm.GetState("Rapid Slash Dash")!.InsertMethod(() => controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rapid Slash Dash")!.speed = -Helpers.GetAdaptedSpeed(4, 30, 300), 0);
         controlFsm.GetState("Dash Slash Antic")!.AddAction(new ActivateGameObject
         {
@@ -358,6 +400,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     }
     public static void SetupPhase3()
     {
+        string[] states = ["DashStab Dash", "Dash Slash Antic", "Stab 3"];
+        foreach (var stateName in states) controlFsm.GetState(stateName)!.AddMethod(Helpers.LookAtHornet);
         controlFsm.GetState("CS Antic")!.AddAction(new FaceObjectV2
         {
             objectA = controlFsm.GetFirstActionOfType<FaceObjectV2>("CS Jump Antic")!.objectA,
@@ -377,5 +421,15 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             brakeOnExit = true
         });
         controlFsm.GetFirstActionOfType<Wait>("WindSlash Antic")!.time = 0.6f;
+        MirrorYDecel("Stab 1");
+        MirrorYDecel("Stab 2");
+        MirrorYDecel("Stab End");
+        MirrorYDecel("Dash Slash 1");
+        MirrorYDecel("Dash Slash 2");
+        MirrorYDecel("Dash Slash End");
+        MirrorYDecel("Stab 3");
+        MirrorYDecel("Stab 4");
+        MirrorYDecel("Stab End 2");
     }
+    public static void MirrorYDecel(string stateName) => controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationY = controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationX;
 }

@@ -195,6 +195,7 @@ public static class CustomBehaviour
     }
     public static IEnumerator Teleport(float x, float y, string nextState, float delay = 0.2f, float finishNextStateIn = -1)
     {
+        Helpers.LookAtHornet();
         rb.linearVelocityY = 0;
         rb.linearVelocityX = 0;
         PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = true;
@@ -267,7 +268,7 @@ public static class CustomBehaviour
         groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { x = 16.4f };
         PaleAutomatonPlugin.groundSpikesParent.SetActive(true);
         yield return new WaitForSeconds(0.5f);
-        PaleAutomatonPlugin.terrainCollider.SetActive(false);
+        //PaleAutomatonPlugin.terrainCollider.SetActive(false);
         yield return new WaitForSeconds(0.5f);
         PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
         PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
@@ -280,7 +281,7 @@ public static class CustomBehaviour
             PaleAutomatonPlugin.controlFsm.FsmVariables.GetFsmFloat("Gravity").Value = 0;
             PaleAutomatonPlugin.controlFsm.SetState("First Idle");
             yield return new WaitForSeconds(0.5f);
-            yield return /*Random.Range(1, 6)*/ 3 switch
+            yield return /*Random.Range(1, 6)*/ 2 switch
             {
                 1 => WindSlashSpam(),
                 2 => DashSlashIntoCrossSlash(),
@@ -330,8 +331,15 @@ public static class CustomBehaviour
     //? 3: stab flurry or windslash > new attack
     public static IEnumerator DashSlashIntoCrossSlash()
     {
-        var hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x, hcPos.y, "DashStab Antic");
+        var direction = Random.value > 0.5f ? -1 : 1;
+        yield return Teleport(HeroController.instance.transform.position.x + 7 * direction, HeroController.instance.transform.position.y + Random.Range(-3, 3), "DashStab Antic");
+        yield return new WaitForSeconds(1.1f);
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(HeroController.instance.transform.position.x, HeroController.instance.transform.position.y, 0, 0.2f, true));
+        yield return Teleport(HeroController.instance.transform.position.x + 7 * direction, HeroController.instance.transform.position.y + Random.Range(-3, 3), "DashStab Antic");
+        yield return new WaitForSeconds(1.1f);
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(HeroController.instance.transform.position.x, HeroController.instance.transform.position.y, 0, 0.2f, true));
+        yield return Teleport(HeroController.instance.transform.position.x + 7 * direction, HeroController.instance.transform.position.y + Random.Range(-3, 3), "Stab 3");
+        yield return new WaitForSeconds(0.6f);
         yield return new WaitForSeconds(0.2f);
     }
     //? 1: charge a long cross slash

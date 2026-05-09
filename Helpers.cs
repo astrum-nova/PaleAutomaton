@@ -78,6 +78,19 @@ public static class Helpers
             if (PaleAutomatonPlugin.songKnight.transform.position.x > HeroController.instance.transform.position.x) PaleAutomatonPlugin.songKnight.transform.FlipLocalScale(x: true);
         }
     }
+    public static Vector2 GetNormalizedDirection()
+    {
+        var res = (HeroController.instance.transform.position - PaleAutomatonPlugin.songKnight.transform.position).normalized;
+        res.x = Math.Abs(res.x);
+        return res;
+    }
+    public static void LookAtHornet() 
+    {
+        var diff = HeroController.instance.transform.position - PaleAutomatonPlugin.songKnight.transform.position;
+        var angle = Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg;
+        if (HeroController.instance.transform.position.x < PaleAutomatonPlugin.songKnight.transform.position.x) angle -= 180;
+        PaleAutomatonPlugin.songKnight.transform.rotation = Quaternion.Euler(0, 0, angle);
+    }
     public static float GetAdaptedSpeed(float speed, float min, float max) => Mathf.Clamp(Math.Abs(HeroController.instance.transform.position.x - PaleAutomatonPlugin.songKnight.transform.position.x) * speed, min, max);
     /*
     Debug.Log("DISTANCE: " + Math.Abs(HeroController.instance.transform.position.x - PaleAutomatonPlugin.songKnight.transform.position.x));
