@@ -325,11 +325,11 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("Stab 3")!.InsertMethod(() =>
         {
             var speed = Helpers.GetAdaptedSpeed(25f, 250, 300);
-            speed *= 1.25f;
             if (!PHASE_3) controlFsm.GetFirstActionOfType<SetVelocityByScale>("Stab 3")!.speed = -speed;
             else
             {
                 var direction = Helpers.GetNormalizedDirection();
+                speed *= 1.25f;
                 controlFsm.GetFirstActionOfType<SetVelocityByScale>("Stab 3")!.speed = direction.x * -speed;
                 controlFsm.GetFirstActionOfType<SetVelocityByScale>("Stab 3")!.ySpeed = direction.y * speed;
             }

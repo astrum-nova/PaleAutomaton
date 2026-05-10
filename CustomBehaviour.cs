@@ -332,6 +332,7 @@ public static class CustomBehaviour
     //? 3: stab flurry or windslash > new attack
     public static IEnumerator DashSlashIntoCrossSlash()
     {
+        //todo: instead of stall tps try tping into dashstab antic and letting it go normally without finishing the state early, and try using the tp delay
         var direction = Random.value > 0.5f ? -1 : 1;
         var hcPos = HeroController.instance.transform.position;
         var xPos = hcPos.x + 13 * direction;
