@@ -193,7 +193,7 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(0.4f);
         PaleAutomatonPlugin.customComboSequence = false;
     }
-    public static IEnumerator Teleport(float x, float y, string nextState, float delay = 0.2f, float finishNextStateIn = -1)
+    public static IEnumerator Teleport(float x, float y, string nextState, float delay = 0.2f, float finishNextStateIn = -1, bool lookAtHornet = false)
     {
         rb.linearVelocityY = 0;
         rb.linearVelocityX = 0;
@@ -207,7 +207,8 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
         PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = false;
         PaleAutomatonPlugin.controlFsm.SetState(nextState);
-        Helpers.LookAtHornet();
+        if (lookAtHornet) Helpers.LookAtHornet();
+        else PaleAutomatonPlugin.songKnight.transform.rotation = Quaternion.Euler(0, 0, 0);
         if (finishNextStateIn != -1)
         {
             yield return new WaitForSeconds(finishNextStateIn);
@@ -283,7 +284,7 @@ public static class CustomBehaviour
             PaleAutomatonPlugin.controlFsm.FsmVariables.GetFsmFloat("Gravity").Value = 0;
             PaleAutomatonPlugin.controlFsm.SetState("First Idle");
             yield return new WaitForSeconds(0.5f);
-            yield return /*Random.Range(1, 6)*/ 4 switch
+            yield return Random.Range(1, 6) switch
             {
                 1 => WindSlashSpam(),
                 2 => LiterallyBoundlessInfinity(),
@@ -300,7 +301,7 @@ public static class CustomBehaviour
         var hcPos = HeroController.instance.transform.position;
         var yOffset = Random.Range(-3, 3);
         var xPos = hcPos.x + 13 * direction - yOffset * direction;
-        yield return Teleport(xPos, hcPos.y + yOffset, "DashStab Antic");
+        yield return Teleport(xPos, hcPos.y + yOffset, "DashStab Antic", lookAtHornet:true);
         yield return new WaitForSeconds(1.3f);
         PaleAutomatonPlugin.controlFsm.SetState("DashStab Dash");
         yield return new WaitForSeconds(1.3f);
@@ -342,24 +343,24 @@ public static class CustomBehaviour
         var xOffset = Random.Range(10f, 13f) * direction;
         var yOffset = Random.Range(-4f, 1f);
         var hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A");
+        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A", lookAtHornet:true);
         yield return new WaitForSeconds(0.6f);
         PaleAutomatonPlugin.controlFsm.SetState("WindSlash");
         yield return new WaitForSeconds(0.2f);
         xOffset = Random.Range(10f, 13f) * -direction;
         yOffset = Random.Range(-4f, 1f);
         hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A");
+        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A", lookAtHornet:true);
         yield return new WaitForSeconds(0.6f);
         xOffset = Random.Range(10f, 13f) * direction;
         yOffset = Random.Range(-4f, 1f);
         hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A");
+        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A", lookAtHornet:true);
         yield return new WaitForSeconds(0.6f);
         xOffset = Random.Range(10f, 13f) * -direction;
         yOffset = Random.Range(-4f, 1f);
         hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A");
+        yield return Teleport(hcPos.x + xOffset, hcPos.y + yOffset, "Windslash A", lookAtHornet:true);
         yield return new WaitForSeconds(0.6f);
         PaleAutomatonPlugin.controlFsm.SetState("WindSlash");
         yield return new WaitForSeconds(0.2f);
@@ -405,10 +406,6 @@ public static class CustomBehaviour
         if (Random.value > 0.5f || true)
         {
             PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
-        }
-        else
-        {
-            //todo: dive straight down
         }
         yield return new WaitForSeconds(0.2f);
         PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
