@@ -89,7 +89,7 @@ public static class Helpers
         var diff = HeroController.instance.transform.position - PaleAutomatonPlugin.songKnight.transform.position;
         var angle = Mathf.Atan2(diff.y, diff.x) * Mathf.Rad2Deg;
         if (HeroController.instance.transform.position.x < PaleAutomatonPlugin.songKnight.transform.position.x) angle -= 180;
-        PaleAutomatonPlugin.songKnight.transform.rotation = Quaternion.Euler(0, 0, angle);
+        PaleAutomatonPlugin.songKnight.transform.rotation = Quaternion.Euler(0, 0, PaleAutomatonPlugin.controlFsm.ActiveStateName.Equals("Dive Antic") ? 0 : angle);
     }
     public static float GetAdaptedSpeed(float speed, float min, float max) => Mathf.Clamp(Math.Abs(HeroController.instance.transform.position.x - PaleAutomatonPlugin.songKnight.transform.position.x) * speed, min, max);
     public static Vector2[] originalDownSlash = null!;

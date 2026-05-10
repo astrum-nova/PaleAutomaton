@@ -218,6 +218,9 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             PHASE_3 = true;
             Instance.StartCoroutine(CustomBehaviour.Phase3Transition());
             SetupPhase3();
+            var hitbox = songKnight.transform.Find("Dive Hit").gameObject;
+            hitbox.GetComponent<PolygonCollider2D>().SetPath(0, songKnight.transform.Find("ComboSlash 1").gameObject.GetComponent<PolygonCollider2D>().points);
+            hitbox.transform.localScale = new Vector3(1, 2, 1);
             return true;
         }
         return false;
@@ -277,8 +280,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.floatVariable = 0f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.falseValue = 0f;
         controlFsm.GetFirstActionOfType<ConvertBoolToFloat>("Idle")!.trueValue = 0f;
-        controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.minValue = 195;
-        controlFsm.GetFirstActionOfType<FloatClamp>("Dive R")!.maxValue = 345;
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.minValue = 180;
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dive R")!.maxValue = 360;
         controlFsm.GetLastActionOfType<FaceObjectV2>("Dive Dir")!.pauseBetweenTurns = 0f;
         controlFsm.GetLastActionOfType<Wait>("CS Antic")!.time = 0.25f;
         controlFsm.GetState("Rising Slash Antic")!.AddAction(new Wait { time = 0.6f, finishEvent = FsmEvent.Finished, realTime = false });
@@ -403,8 +406,16 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("Jump Antic")!.AddAction(new Wait { time = 0.01f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetFirstActionOfType<SetFloatValue>("Set Wind Slash")!.floatValue = 9;
     }
+
+    public static void MirrorYDecel(string stateName) => controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationY = controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationX;
+
     public static void SetupPhase3()
     {
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.minValue = 135;
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.maxValue = 270;
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dive R")!.minValue = 270;
+        controlFsm.GetFirstActionOfType<FloatClamp>("Dive R")!.maxValue = 360;
+        controlFsm.GetFirstActionOfType<Wait>("Dive Antic")!.time = 0.6f;
         string[] states = ["DashStab Dash", "Dash Slash Antic", "Stab 3"];
         foreach (var stateName in states) controlFsm.GetState(stateName)!.AddMethod(Helpers.LookAtHornet);
         controlFsm.GetState("CS Antic")!.AddAction(new FaceObjectV2
@@ -417,6 +428,13 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             resetFrame = false,
             everyFrame = false,
             pauseBetweenTurns = 0
+        });
+        controlFsm.GetState("Dive Antic")!.AddAction(new DecelerateXY
+        {
+            gameObject = controlFsm.GetFirstActionOfType<DecelerateXY>("Dive Land")!.gameObject,
+            decelerationX = 0.6f,
+            decelerationY = 0.6f,
+            brakeOnExit = true
         });
         controlFsm.GetState("First Idle")!.AddAction(new DecelerateXY
         {
@@ -435,6 +453,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         MirrorYDecel("Stab 3");
         MirrorYDecel("Stab 4");
         MirrorYDecel("Stab End 2");
+        MirrorYDecel("Dive Land");
     }
-    public static void MirrorYDecel(string stateName) => controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationY = controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationX;
 }

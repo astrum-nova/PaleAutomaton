@@ -79,18 +79,17 @@ public static class Patches
     [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.NailClash))]
     private static void DamageHero_NailClash_Prefix(DamageHero __instance)
     {
-        if (CustomBehaviour.csSpam)
-        if (__instance.transform.parent.gameObject.name.StartsWith("CrossSlashSetup"))
-        {
-            HeroController.instance.StartInvulnerable(0.15f);
-            HeroController.instance.invulnerableDuration = 0.15f;
-        }
+        if (!CustomBehaviour.csSpam) return;
+        if (!__instance.transform.parent.gameObject.name.StartsWith("CrossSlashSetup")) return;
+        HeroController.instance.StartInvulnerable(0.15f);
+        HeroController.instance.invulnerableDuration = 0.15f;
     }
     [HarmonyPostfix]
     [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.NailClash))]
     private static void DamageHero_NailClash_Postfix(DamageHero __instance)
     {
         if (!PaleAutomatonPlugin.bossScene) return;
+        if (HeroController.instance.cState.downAttacking) HeroController.instance.DownspikeBounce(false);
         HeroController.instance.AddSilkParts(1, false);
         PaleAutomatonPlugin.healthManager.SpriteFlash.flashArmoured();
         var damage = PlayerData.instance.nailDamage / 2;
