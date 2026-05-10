@@ -195,7 +195,6 @@ public static class CustomBehaviour
     }
     public static IEnumerator Teleport(float x, float y, string nextState, float delay = 0.2f, float finishNextStateIn = -1)
     {
-        Helpers.LookAtHornet();
         rb.linearVelocityY = 0;
         rb.linearVelocityX = 0;
         PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = true;
@@ -208,6 +207,7 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
         PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = false;
         PaleAutomatonPlugin.controlFsm.SetState(nextState);
+        Helpers.LookAtHornet();
         if (finishNextStateIn != -1)
         {
             yield return new WaitForSeconds(finishNextStateIn);
@@ -270,6 +270,7 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(0.5f);
         //PaleAutomatonPlugin.terrainCollider.SetActive(false);
         yield return new WaitForSeconds(0.5f);
+        Helpers.ToggleDownSlashHitbox(true);
         PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
         PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
     }
@@ -332,15 +333,28 @@ public static class CustomBehaviour
     public static IEnumerator DashSlashIntoCrossSlash()
     {
         var direction = Random.value > 0.5f ? -1 : 1;
-        yield return Teleport(HeroController.instance.transform.position.x + 7 * direction, HeroController.instance.transform.position.y + Random.Range(-3, 3), "DashStab Antic");
+        var hcPos = HeroController.instance.transform.position;
+        var xPos = hcPos.x + 13 * direction;
+        yield return Teleport(xPos, hcPos.y + Random.Range(-3, 3), "DashStab Antic");
         yield return new WaitForSeconds(1.1f);
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(HeroController.instance.transform.position.x, HeroController.instance.transform.position.y, 0, 0.2f, true));
-        yield return Teleport(HeroController.instance.transform.position.x + 7 * direction, HeroController.instance.transform.position.y + Random.Range(-3, 3), "DashStab Antic");
-        yield return new WaitForSeconds(1.1f);
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(HeroController.instance.transform.position.x, HeroController.instance.transform.position.y, 0, 0.2f, true));
-        yield return Teleport(HeroController.instance.transform.position.x + 7 * direction, HeroController.instance.transform.position.y + Random.Range(-3, 3), "Stab 3");
+        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(xPos, 100, "First Idle"));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0f, 0.4f));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 7, hcPos.y + 7, 0.05f, 0.45f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 7, hcPos.y - 7, 0.1f, 0.5f, true));
         yield return new WaitForSeconds(0.6f);
-        yield return new WaitForSeconds(0.2f);
+        hcPos = HeroController.instance.transform.position;
+        xPos = hcPos.x + 13 * direction;
+        yield return Teleport(xPos, hcPos.y + Random.Range(-3, 3), "DashStab Antic", finishNextStateIn: 0.4f);
+        yield return new WaitForSeconds(0.7f);
+        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(xPos, 100, "First Idle"));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0f, 0.4f));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 7, hcPos.y + 7, 0.05f, 0.45f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 7, hcPos.y - 7, 0.1f, 0.5f, true));
+        yield return new WaitForSeconds(0.6f);
+        hcPos = HeroController.instance.transform.position;
+        xPos = hcPos.x + 13 * direction;
+        yield return Teleport(xPos, hcPos.y + Random.Range(-3, 3), "DashStab Antic", finishNextStateIn: 0.4f);
+        yield return new WaitForSeconds(0.3f);
     }
     //? 1: charge a long cross slash
     //? 2: a bunch of cross slash telegraphs spawn randomly

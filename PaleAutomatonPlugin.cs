@@ -58,6 +58,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         {
             bossScene = false;
             GameCameras.instance.tk2dCam.ZoomFactor = 1;
+            Helpers.ToggleDownSlashHitbox(false);
             if (!GameManager.instance.IsGameplayScene()) return;
             if (scene.name != "Arborium_11") return;
             PHASE_2 = false;
@@ -78,7 +79,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
                     if (rootGameObject.name.EndsWith("(10)")) rootGameObject.transform.position = rootGameObject.transform.position with { x = 129 };
                     else Destroy(rootGameObject);
                 }
-
                 if (rootGameObject.name == "terrain collider") terrainCollider = rootGameObject;
             }
             Destroy(GameObject.Find("citadel_bat_swarms"));
@@ -112,7 +112,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             shifted.transform.GetChild(7).transform.position = shifted.transform.GetChild(7).transform.position with { z = -1.4537f };
         }
         groundSpikesParent.SetActive(false);
-        
+        Helpers.originalDownSlash = HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlash").gameObject.GetComponent<PolygonCollider2D>().points;
+        Helpers.originalDownSlashAlt = HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlashAlt").gameObject.GetComponent<PolygonCollider2D>().points;
     }
     private static IEnumerator FancyZoomOut(float duration, float targetZoom)
     {
@@ -255,6 +256,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             else
             {
                 var direction = Helpers.GetNormalizedDirection();
+                speed *= 1.25f;
                 controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = direction.x * -speed;
                 controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.ySpeed = direction.y * speed;
             }
@@ -303,6 +305,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             else
             {
                 var direction = Helpers.GetNormalizedDirection();
+                speed *= 1.25f;
                 controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.speed = direction.x * -speed;
                 controlFsm.GetFirstActionOfType<SetVelocityByScale>("DashStab Dash")!.ySpeed = direction.y * speed;
             }
@@ -314,6 +317,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             else
             {
                 var direction = Helpers.GetNormalizedDirection();
+                speed *= 1.15f;
                 controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash Antic")!.speed = direction.x * -speed;
                 controlFsm.GetFirstActionOfType<SetVelocityByScale>("Dash Slash Antic")!.ySpeed = direction.y * speed;
             }
@@ -321,6 +325,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("Stab 3")!.InsertMethod(() =>
         {
             var speed = Helpers.GetAdaptedSpeed(25f, 250, 300);
+            speed *= 1.25f;
             if (!PHASE_3) controlFsm.GetFirstActionOfType<SetVelocityByScale>("Stab 3")!.speed = -speed;
             else
             {

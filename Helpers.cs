@@ -92,9 +92,31 @@ public static class Helpers
         PaleAutomatonPlugin.songKnight.transform.rotation = Quaternion.Euler(0, 0, angle);
     }
     public static float GetAdaptedSpeed(float speed, float min, float max) => Mathf.Clamp(Math.Abs(HeroController.instance.transform.position.x - PaleAutomatonPlugin.songKnight.transform.position.x) * speed, min, max);
-    /*
-    Debug.Log("DISTANCE: " + Math.Abs(HeroController.instance.transform.position.x - PaleAutomatonPlugin.songKnight.transform.position.x));
-    Debug.Log("ADAPTED SPEED: " + Math.Abs(HeroController.instance.transform.position.x - PaleAutomatonPlugin.songKnight.transform.position.x) * speed);
-    Debug.Log("MAX: " + max + ", MIN: " + min);
-    */
+    public static Vector2[] originalDownSlash = null!;
+    public static Vector2[] originalDownSlashAlt = null!;
+    private static readonly Vector2[] expandedDownSlash =
+    [
+        new(3.524622f, 0.000000f),    // Right Center
+        new(3.256326f, 1.211478f),
+        new(2.492284f, 2.238519f),
+        new(1.348815f, 2.924766f),
+        new(0.000000f, 3.165744f),    // Top Reference (Unchanged)
+        new(-1.348815f, 2.924766f),
+        new(-2.492284f, 2.238519f),
+        new(-3.256326f, 1.211478f),
+        new(-3.524622f, 0.000000f),   // Left Center
+        new(-3.256326f, -1.211478f),
+        new(-2.492284f, -2.238519f),
+        new(-1.348815f, -2.924766f),
+        new(-0.000000f, -3.165744f),  // Bottom Reference (Unchanged)
+        new(1.348815f, -2.924766f),
+        new(2.492284f, -2.238519f),
+        new(3.256326f, -1.211478f),
+    ];
+    public static void ToggleDownSlashHitbox(bool useExpanded)
+    {
+        if (originalDownSlash == null || originalDownSlashAlt == null) return;
+        HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlash").gameObject.GetComponent<PolygonCollider2D>().SetPath(0, useExpanded ? expandedDownSlash : originalDownSlash);
+        HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlashAlt").gameObject.GetComponent<PolygonCollider2D>().SetPath(0, useExpanded ? expandedDownSlash : originalDownSlashAlt);
+    }
 }
