@@ -302,9 +302,11 @@ public static class CustomBehaviour
         var yOffset = Random.Range(-3, 3);
         var xPos = hcPos.x + 13 * direction - yOffset * direction;
         yield return Teleport(xPos, hcPos.y + yOffset, "DashStab Antic", lookAtHornet:true);
-        yield return new WaitForSeconds(1.3f);
-        PaleAutomatonPlugin.controlFsm.SetState("DashStab Dash");
-        yield return new WaitForSeconds(1.3f);
+        yield return new WaitForSeconds(1.7f);
+        PaleAutomatonPlugin.controlFsm.SetState("DashStab Antic");
+        yield return new WaitForSeconds(0.1f);
+        PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+        yield return new WaitForSeconds(1.1f);
     }
     public static IEnumerator DiveIntoCrossSlash()
     {
@@ -313,7 +315,7 @@ public static class CustomBehaviour
         yield return Teleport(hcPos.x + 8.5f * direction, hcPos.y + 5, "Dive Dir");
         yield return new WaitForSeconds(0.7f);
         hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.1f);
+        yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", delay:0, finishNextStateIn: 0.1f);
         yield return new WaitForSeconds(0.2f);
         hcPos = HeroController.instance.transform.position;
         PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0f, 0.4f));
@@ -325,7 +327,7 @@ public static class CustomBehaviour
         yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.1f);
         yield return new WaitForSeconds(0.2f);
         hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 8.5f * direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.1f);
+        yield return Teleport(hcPos.x + 8.5f * direction, hcPos.y + 5, "Dive Dir", delay:0, finishNextStateIn: 0.1f);
         yield return new WaitForSeconds(0.2f);
         hcPos = HeroController.instance.transform.position;
         PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0f, 0.4f));
@@ -335,7 +337,7 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(0.8f);
         hcPos = HeroController.instance.transform.position;
         yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.1f);
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.2f);
     }   
     public static IEnumerator WindSlashSpam()
     {
