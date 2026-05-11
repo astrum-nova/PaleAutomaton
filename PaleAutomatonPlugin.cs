@@ -37,7 +37,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static bool PHASE_2 = false;
     public static int PHASE_3_THRESHOLD = 1780;
     public static bool PHASE_3 = false;
-    public static int PHASE_4_THRESHOLD = 1000;
+    public static int PHASE_4_THRESHOLD = 1770;
     public static bool PHASE_4 = false;
     public static bool bossScene;
     public static bool windslashGround;

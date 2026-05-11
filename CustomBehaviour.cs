@@ -20,8 +20,9 @@ public static class CustomBehaviour
     public static GameObject tpEffectSetup = null!;
     public static GameObject crossSlashSetup = null!;
     public static GameObject crossSlashAnticSetup = null!;
+    public static GameObject groundSpikesCollider = null!;
     public static Rigidbody2D rb = null!;
-    public static bool csSpam = false;
+    public static bool csSpam;
     public static IEnumerator SpawnWindSlash()
     {
         if (!skProjectileSetup)
@@ -40,7 +41,8 @@ public static class CustomBehaviour
         }
         var instance = Pools.GetWindSlash();
         instance.SetActive(true);
-        yield return new WaitForSeconds(1);
+        instance.GetComponent<DamageHero>().enabled = !inPhase4Transition;
+        yield return new WaitForSeconds(inPhase4Transition ? 10 : 1);
         instance.SetActive(false);
         instance.GetComponent<PlayMakerFSM>().Reset();
     }
@@ -245,20 +247,33 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(0.3f);
         crossSlash.SetActive(false);
     }
-
+    public static bool inPhase4Transition = false;
     public static IEnumerator Phase4Transition()
     {
-        PaleAutomatonPlugin.healthManager.invincible = true;
+        inPhase4Transition = true;
         var hPos = HeroController.instance.transform.position;
-        var yPos = hPos.y - 6;
-        yield break;
+        var yPos = Math.Clamp(hPos.y - 5, 20, 9999);
+        yield return Teleport(hPos.x, yPos, "Windslash A");
+        PaleAutomatonPlugin.songKnight.transform.localScale = PaleAutomatonPlugin.songKnight.transform.localScale with {x = 1};
+        PaleAutomatonPlugin.songKnight.transform.SetRotation2D(90);
+        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.groundSpikesParent.SetActive(false);
+        groundSpikesCollider.SetActive(false);
+        GameObject.Find("strut_bg_song_bridge_example").SetActive(false);
+        yield return new WaitForSeconds(0.2f);
+        PaleAutomatonPlugin.songKnight.transform.SetRotation2D(0);
+        yield return Teleport(hPos.x, 100, "First Idle");
+        inPhase4Transition = false;
+        yield return new WaitForSeconds(0.5f);
     }
     public static IEnumerator Phase3Transition()
     {
         yield return Teleport(100, 100, "First Idle");
         PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
         yield return new WaitForSeconds(1);
-        var groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
+        Object.Destroy(PaleAutomatonPlugin.songKnight.transform.Find("WindSlash Hit").gameObject);
+        GameObject.Find("CameraLockArea (1)").transform.localScale = GameObject.Find("CameraLockArea (1)").transform.localScale with { y = GameObject.Find("CameraLockArea (1)").transform.localScale.y + 100 };
+        groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
         groundSpikesCollider.name = "GroundSpikesCollider";
         var fallKiller = Object.Instantiate(GameObject.Find("Spike Collider"))!;
         Helpers.SetupGroundSpikeHitbox(groundSpikesCollider);
@@ -275,6 +290,7 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
         PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
     }
+    public static List<int> attackMemory = [3, 4, 5];
     public static IEnumerator SelectPhase3Attack()
     {
         if (!PaleAutomatonPlugin.bossScene) yield break;
@@ -288,7 +304,11 @@ public static class CustomBehaviour
                 PaleAutomatonPlugin.PHASE_4 = true;
                 yield return Phase4Transition();
             }
-            yield return Random.Range(1, 6) switch
+            int attack;
+            do attack = Random.Range(1, 6); while (attackMemory.Contains(attack));
+            attackMemory.RemoveAt(0);
+            attackMemory.Add(attack);
+            yield return attack switch
             {
                 1 => WindSlashSpam(),
                 2 => LiterallyBoundlessInfinity(),
@@ -308,18 +328,19 @@ public static class CustomBehaviour
         yield return Teleport(xPos, hcPos.y + yOffset, "DashStab Antic", lookAtHornet:true);
         yield return new WaitForSeconds(1.7f);
         PaleAutomatonPlugin.controlFsm.SetState("DashStab Antic");
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(0.05f);
         PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
         yield return new WaitForSeconds(1.1f);
     }
     public static IEnumerator DiveIntoCrossSlash()
     {
+        //todo: make this more consistent
         var direction = Random.value > 0.5f ? -1 : 1;
         var hcPos = HeroController.instance.transform.position;
         yield return Teleport(hcPos.x + 8.5f * direction, hcPos.y + 5, "Dive Dir");
         yield return new WaitForSeconds(0.7f);
         hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", delay:0, finishNextStateIn: 0.1f);
+        yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", delay:0, finishNextStateIn: 0.2f);
         yield return new WaitForSeconds(0.2f);
         hcPos = HeroController.instance.transform.position;
         PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0f, 0.4f));
@@ -328,7 +349,7 @@ public static class CustomBehaviour
         yield return Teleport(hcPos.x, hcPos.y + 100, "Dive Dir", delay:0f, finishNextStateIn: 0f);
         yield return new WaitForSeconds(0.8f);
         hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.1f);
+        yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.2f);
         yield return new WaitForSeconds(0.2f);
         hcPos = HeroController.instance.transform.position;
         yield return Teleport(hcPos.x + 8.5f * direction, hcPos.y + 5, "Dive Dir", delay:0, finishNextStateIn: 0.1f);
@@ -340,7 +361,7 @@ public static class CustomBehaviour
         yield return Teleport(hcPos.x, hcPos.y + 100, "Dive Dir", delay:0f, finishNextStateIn: 0f);
         yield return new WaitForSeconds(0.8f);
         hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.1f);
+        yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.2f);
         yield return new WaitForSeconds(0.2f);
     }   
     public static IEnumerator WindSlashSpam()
