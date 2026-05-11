@@ -6,8 +6,10 @@ namespace PaleAutomaton;
 public class ProjectileMover : MonoBehaviour
 {
     private Vector3 moveDirection;
+    private int speedSet;
     private void OnEnable()
     {
+        speedSet = 100;
         GetComponent<PlayMakerFSM>().Reset();
         transform.localScale = new Vector3(2.7f, 2.7f, 1);
         var targetPos = HeroController.instance.transform.position;
@@ -32,6 +34,6 @@ public class ProjectileMover : MonoBehaviour
     }
     private void Update()
     {
-        transform.position += moveDirection * (Time.deltaTime * 100);
+        transform.position += moveDirection * (Time.deltaTime * speedSet);
     }
 }

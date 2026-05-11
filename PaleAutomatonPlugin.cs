@@ -26,6 +26,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static GameObject songKnight = null!;
     public static GameObject groundSpikesSetup = null!;
     public static GameObject groundSpikesParent = null!;
+    public static GameObject chargingEffect = null!;
     public static GameObject terrainCollider = null!;
     public static PlayMakerFSM controlFsm = null!;
     public static HealthManager healthManager = null!;
@@ -37,7 +38,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static bool PHASE_2 = false;
     public static int PHASE_3_THRESHOLD = 1780;
     public static bool PHASE_3 = false;
-    public static int PHASE_4_THRESHOLD = 1000;
+    public static int PHASE_4_THRESHOLD = 1770;
     public static bool PHASE_4 = false;
     public static bool bossScene;
     public static bool windslashGround;
@@ -202,6 +203,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Slash").gameObject);
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Strike L").gameObject);
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Strike R").gameObject);
+        chargingEffect = controlFsm.transform.GetChild(18).gameObject;
         SetupPaleAutomaton();
     }
     public static bool PhaseCheck()

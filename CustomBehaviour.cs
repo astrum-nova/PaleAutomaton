@@ -22,7 +22,7 @@ public static class CustomBehaviour
     public static GameObject crossSlashAnticSetup = null!;
     public static Rigidbody2D rb = null!;
     public static bool csSpam = false;
-    public static IEnumerator SpawnWindSlash()
+    public static IEnumerator SpawnWindSlash(bool phase4Trans)
     {
         if (!skProjectileSetup)
         {
@@ -43,6 +43,7 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(1);
         instance.SetActive(false);
         instance.GetComponent<PlayMakerFSM>().Reset();
+        //todo: check if phase4Trans and do custom shit for the windslash
     }
     private static string parriedState = "";
     public static IEnumerator AnticParry()
@@ -60,6 +61,7 @@ public static class CustomBehaviour
     }
     public static IEnumerator Phase2Transition()
     {
+        PaleAutomatonPlugin.chargingEffect.SetActive(false);
         PaleAutomatonPlugin.controlFsm.SetState("Parry Antic");
         PaleAutomatonPlugin.controlFsm.GetState("Parry Stance")!.AddAction(new StartRoarEmitter
         {
@@ -245,13 +247,24 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(0.3f);
         crossSlash.SetActive(false);
     }
-
+    public static bool inPhase4Transition = false;
     public static IEnumerator Phase4Transition()
     {
+        inPhase4Transition = true;
         PaleAutomatonPlugin.healthManager.invincible = true;
         var hPos = HeroController.instance.transform.position;
-        var yPos = hPos.y - 6;
-        yield break;
+        var yPos = Math.Clamp(hPos.y - 6, 16, 9999);
+        yield return Teleport(hPos.x, yPos, "Windslash A");
+        PaleAutomatonPlugin.songKnight.transform.localScale = PaleAutomatonPlugin.songKnight.transform.localScale with {x = 1};
+        PaleAutomatonPlugin.songKnight.transform.SetRotation2D(90);
+        PaleAutomatonPlugin.chargingEffect.SetActive(true);
+        PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = true;
+        yield return new WaitForSeconds(1f);
+        PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = false;
+        PaleAutomatonPlugin.healthManager.invincible = false;
+        PaleAutomatonPlugin.songKnight.transform.SetRotation2D(0);
+        yield return Teleport(hPos.x, 100, "First Idle");
+        yield return new WaitForSeconds(0.4f);
     }
     public static IEnumerator Phase3Transition()
     {
