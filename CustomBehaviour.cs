@@ -308,7 +308,7 @@ public static class CustomBehaviour
         yield return Teleport(xPos, hcPos.y + yOffset, "DashStab Antic", lookAtHornet:true);
         yield return new WaitForSeconds(1.7f);
         PaleAutomatonPlugin.controlFsm.SetState("DashStab Antic");
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(0.05f);
         PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
         yield return new WaitForSeconds(1.1f);
     }
