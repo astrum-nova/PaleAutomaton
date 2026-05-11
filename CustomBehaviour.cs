@@ -245,6 +245,14 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(0.3f);
         crossSlash.SetActive(false);
     }
+
+    public static IEnumerator Phase4Transition()
+    {
+        PaleAutomatonPlugin.healthManager.invincible = true;
+        var hPos = HeroController.instance.transform.position;
+        var yPos = hPos.y - 6;
+        yield break;
+    }
     public static IEnumerator Phase3Transition()
     {
         yield return Teleport(100, 100, "First Idle");
@@ -252,25 +260,16 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(1);
         var groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
         groundSpikesCollider.name = "GroundSpikesCollider";
-        groundSpikesCollider.layer = LayerMask.NameToLayer("Enemies");
-        var damageHero = groundSpikesCollider.GetComponent<DamageHero>();
-        damageHero.SetDamageAmount(2);
-        damageHero.hazardType = HazardType.NON_HAZARD;
-        var collider = groundSpikesCollider.GetComponent<PolygonCollider2D>();
-        collider.name = "GroundSpikeColliderComponent";
-        collider.SetPath(0, new List<Vector2>()
-        {
-            new(0, 0),
-            new(0, 1),
-            new(1, 1),
-            new(1, 0),
-        });
-        groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with { y = 12.5f };
-        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { y = 180 };
-        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { x = 16.4f };
-        PaleAutomatonPlugin.groundSpikesParent.SetActive(true);
+        var fallKiller = Object.Instantiate(GameObject.Find("Spike Collider"))!;
+        Helpers.SetupGroundSpikeHitbox(groundSpikesCollider);
+        Helpers.SetupGroundSpikeHitbox(fallKiller);
+        fallKiller.name = "FallKiller";
+        fallKiller.transform.position = fallKiller.transform.position with {y = -6};
+        fallKiller.GetComponent<DamageHero>().SetDamageAmount(999);
+        fallKiller.transform.localScale = fallKiller.transform.localScale with {y = 180};
+        fallKiller.transform.localScale = fallKiller.transform.localScale with {x = 100};
         yield return new WaitForSeconds(0.5f);
-        //PaleAutomatonPlugin.terrainCollider.SetActive(false);
+        PaleAutomatonPlugin.terrainCollider.transform.position = PaleAutomatonPlugin.terrainCollider.transform.position with {y = -50};
         yield return new WaitForSeconds(0.5f);
         Helpers.ToggleDownSlashHitbox(true);
         PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
@@ -284,6 +283,11 @@ public static class CustomBehaviour
             PaleAutomatonPlugin.controlFsm.FsmVariables.GetFsmFloat("Gravity").Value = 0;
             PaleAutomatonPlugin.controlFsm.SetState("First Idle");
             yield return new WaitForSeconds(0.5f);
+            if (PaleAutomatonPlugin.healthManager.hp <= PaleAutomatonPlugin.PHASE_4_THRESHOLD && !PaleAutomatonPlugin.PHASE_4)
+            {
+                PaleAutomatonPlugin.PHASE_4 = true;
+                yield return Phase4Transition();
+            }
             yield return Random.Range(1, 6) switch
             {
                 1 => WindSlashSpam(),

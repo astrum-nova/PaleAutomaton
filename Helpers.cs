@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using GlobalEnums;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
@@ -56,6 +58,26 @@ public static class Helpers
     {
         yield return new WaitForSeconds(delay);
         PaleAutomatonPlugin.controlFsm.SetState(state);
+    }
+    public static void SetupGroundSpikeHitbox(GameObject groundSpikesCollider)
+    {
+        groundSpikesCollider.layer = LayerMask.NameToLayer("Enemies");
+        var damageHero = groundSpikesCollider.GetComponent<DamageHero>();
+        damageHero.SetDamageAmount(2);
+        damageHero.hazardType = HazardType.NON_HAZARD;
+        var collider = groundSpikesCollider.GetComponent<PolygonCollider2D>();
+        collider.name = "GroundSpikeColliderComponent";
+        collider.SetPath(0, new List<Vector2>()
+        {
+            new(0, 0),
+            new(0, 1),
+            new(1, 1),
+            new(1, 0),
+        });
+        groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with { y = 12.5f };
+        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { y = 180 };
+        groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { x = 16.4f };
+        PaleAutomatonPlugin.groundSpikesParent.SetActive(true);
     }
     public static IEnumerator TpEffect()
     {

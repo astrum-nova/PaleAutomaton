@@ -225,6 +225,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         }
         return false;
     }
+    public static void MirrorYDecel(string stateName) => controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationY = controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationX;
     private static void SetupPaleAutomaton()
     {
         Helpers.RemoveEventFromState("Parry Antic", "TOOK DAMAGE");
@@ -406,9 +407,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("Jump Antic")!.AddAction(new Wait { time = 0.01f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetFirstActionOfType<SetFloatValue>("Set Wind Slash")!.floatValue = 9;
     }
-
-    public static void MirrorYDecel(string stateName) => controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationY = controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationX;
-
     public static void SetupPhase3()
     {
         controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.minValue = 135;
