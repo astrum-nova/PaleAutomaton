@@ -160,6 +160,12 @@ public static class Helpers
     ];
     public static void SetupArena()
     {
+        //todo: make camera ignore scene bounds (this only works for the right side, left is still broken)
+        GameCameras.instance.cameraController.SetAllowExitingSceneBounds(true);
+        GameCameras.instance.cameraController.xLimit = 1000;
+        GameCameras.instance.cameraController.yLimit = 1000;
+        GameCameras.instance.cameraController.xLockMax = 1000;
+        GameCameras.instance.cameraController.xLockMin = -1000;
         foreach (var gameObject in SceneManager.GetActiveScene().GetRootGameObjects())
         {
             if (arenaWhitelist.Contains(gameObject.name))
@@ -167,9 +173,64 @@ public static class Helpers
                 switch (gameObject.name)
                 {
                     case "CameraLockArea (1)":
+                        gameObject.SetActive(false);
+                        break;
+                    case "wind_tiled_set":
+                        gameObject.transform.Find("plane").localScale *= 100;
+                        gameObject.transform.Find("plane (1)").localScale *= 100;
+                        gameObject.transform.Find("plane (2)").localScale *= 100;
+                        gameObject.transform.Find("plane (3)").localScale *= 100;
                         break;
                     case "strut_bg_song_bridge_example":
-                        gameObject.transform.Find("bridge_under_strut_plat_45_angle (8)").gameObject.SetActive(false);
+                        foreach (var objName in (string[])[
+                                     //? Left side parts sticking up
+                                     "bridge_under_strut_plat_45_angle (8)",
+                                     "dock_arch_small_strut_0001_1 (328)",
+                                     "dock_arch_small_strut_0001_1 (373)",
+                                     "dock_arch_small_strut_0001_1 (354)",
+                                     //? Right section separated from the structure
+                                     "dock_arch_small_strut_0001_1 (557)",
+                                     "dock_arch_small_strut_0001_1 (554)",
+                                     "dock_arch_small_strut_0001_1 (549)",
+                                     "dock_arch_small_strut_0001_1 (547)",
+                                     "dock_arch_small_strut_0001_1 (546)",
+                                     "dock_arch_small_strut_0001_1 (537)",
+                                     "dock_arch_small_strut_0001_1 (532)",
+                                     "dock_arch_small_strut_0001_1 (527)",
+                                     "dock_arch_small_strut_0001_1 (525)",
+                                     "dock_arch_small_strut_0001_1 (522)",
+                                     "dock_arch_small_strut_0001_1 (520)",
+                                     "dock_arch_small_strut_0001_1 (515)",
+                                     "dock_arch_small_strut_0001_1 (512)",
+                                     "dock_arch_small_strut_0001_1 (511)",
+                                     "dock_arch_small_strut_0001_1 (509)",
+                                     "dock_arch_small_strut_0001_1 (508)",
+                                     "dock_arch_small_strut_0001_1 (507)",
+                                     "dock_arch_small_strut_0001_1 (499)",
+                                     "dock_arch_small_strut_0001_1 (495)",
+                                     "dock_arch_small_strut_0001_1 (491)",
+                                     "dock_arch_small_strut_0001_1 (466)",
+                                     "dock_arch_small_strut_0001_1 (489)",
+                                     "dock_arch_small_strut_0001_1 (488)",
+                                     "dock_arch_small_strut_0001_1 (484)",
+                                     "dock_arch_small_strut_0001_1 (480)",
+                                     "dock_arch_small_strut_0001_1 (479)",
+                                     "dock_arch_small_strut_0001_1 (530)",
+                                     "dock_arch_small_strut_0001_1 (510)",
+                                     "dock_arch_small_strut_0001_1 (470)",
+                                     "dock_arch_small_strut_0001_1 (468)",
+                                     "dock_arch_small_strut_0001_1 (427)",
+                                     "dock_arch_small_strut_0001_1 (408)",
+                                     "dock_arch_small_strut_0001_1 (406)",
+                                     "dock_arch_small_strut_0001_1 (28)",
+                                     "sc_metal_strut_back (40)",
+                                     "sc_metal_strut_back (33)",
+                                     "sc_metal_strut_back (32)",
+                                 ]) gameObject.transform.Find(objName).gameObject.SetActive(false);
+                        var left = Object.Instantiate(gameObject);
+                        left.transform.position = new Vector3(-98.7366f, -34.5f, -5.1624f);
+                        var right = Object.Instantiate(gameObject);
+                        right.transform.position = new Vector3(257.8815f, -34.5f, -5.1624f);
                         break;
                     case "BlurPlane":
                         gameObject.transform.SetParent(HeroController.instance.transform);
