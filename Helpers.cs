@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Architect.Behaviour.Utility;
 using GlobalEnums;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
@@ -160,12 +161,13 @@ public static class Helpers
     ];
     public static void SetupArena()
     {
-        //todo: make camera ignore scene bounds (this only works for the right side, left is still broken)
         GameCameras.instance.cameraController.SetAllowExitingSceneBounds(true);
-        GameCameras.instance.cameraController.xLimit = 1000;
-        GameCameras.instance.cameraController.yLimit = 1000;
-        GameCameras.instance.cameraController.xLockMax = 1000;
-        GameCameras.instance.cameraController.xLockMin = -1000;
+        var sceneBorderRemover = new GameObject("Scene Border Remover");
+        Object.DontDestroyOnLoad(sceneBorderRemover);
+        sceneBorderRemover.SetActive(false);
+        SceneBorderRemover.Init();
+        sceneBorderRemover.AddComponent<SceneBorderRemover>();
+        sceneBorderRemover.transform.position = new Vector3(0, 0, 0.1f);
         foreach (var gameObject in SceneManager.GetActiveScene().GetRootGameObjects())
         {
             if (arenaWhitelist.Contains(gameObject.name))
@@ -173,6 +175,7 @@ public static class Helpers
                 switch (gameObject.name)
                 {
                     case "CameraLockArea (1)":
+                        //todo: fix camlock 1 shenanigans
                         gameObject.SetActive(false);
                         break;
                     case "wind_tiled_set":
@@ -257,6 +260,7 @@ public static class Helpers
                 }
                 continue;
             }
+            //todo: mirror some bg objects so it doesnt look scuffed asf
             if (gameObject.transform.position.z < 25 || arenaBlacklist.Contains(gameObject.name)) gameObject.SetActive(false);
         }
     }
