@@ -36,7 +36,6 @@ public static class Pools
         pool.Add(clone);
         return clone;
     }
-
     public static void Clear()
     {
         pooledObjectsParent = new GameObject("Pooled Objects Parent");

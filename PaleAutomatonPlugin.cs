@@ -32,13 +32,13 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static DamageHero damageHero = null!;
     
     //* Flags
-    public static int INITIAL_HP = 1800;
-    public static int PHASE_2_THRESHOLD = 1790;
-    public static bool PHASE_2 = false;
-    public static int PHASE_3_THRESHOLD = 1780;
-    public static bool PHASE_3 = false;
-    public static int PHASE_4_THRESHOLD = 1770;
-    public static bool PHASE_4 = false;
+    public const int INITIAL_HP = 1800;
+    public const int PHASE_2_THRESHOLD = 1790;
+    public static bool PHASE_2;
+    public const int PHASE_3_THRESHOLD = 1780;
+    public static bool PHASE_3;
+    public const int PHASE_4_THRESHOLD = 1770;
+    public static bool PHASE_4;
     public static bool bossScene;
     public static bool windslashGround;
     public static bool customComboSequence;
@@ -66,6 +66,9 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             PHASE_4 = false;
             windslashGround = false;
             CustomBehaviour.csSpam = false;
+            var blackThreadStates = GameObject.Find("Black Thread States").transform;
+            blackThreadStates.GetChild(0).gameObject.SetActive(true);
+            blackThreadStates.GetChild(1).gameObject.SetActive(false);
             var quest = GameObject.Find("Merchant Quest Parent")!;
             if (quest.transform.GetChild(0).gameObject.activeSelf) return; //! REMEMBER TO PLAYTEST THIS
             quest.SetActive(false);
@@ -204,7 +207,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Strike R").gameObject);
         SetupPaleAutomaton();
     }
-    public static bool PhaseCheck()
+    private static bool PhaseCheck()
     {
         if (healthManager.hp <= PHASE_2_THRESHOLD && !PHASE_2)
         {
@@ -218,6 +221,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             PHASE_3 = true;
             Instance.StartCoroutine(CustomBehaviour.Phase3Transition());
             SetupPhase3();
+            Instance.StartCoroutine(FancyZoomOut(2, 0.575f));
             var hitbox = songKnight.transform.Find("Dive Hit").gameObject;
             hitbox.GetComponent<PolygonCollider2D>().SetPath(0, songKnight.transform.Find("ComboSlash 1").gameObject.GetComponent<PolygonCollider2D>().points);
             hitbox.transform.localScale = new Vector3(1, 2, 1);
@@ -225,7 +229,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         }
         return false;
     }
-    public static void MirrorYDecel(string stateName) => controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationY = controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationX;
     private static void SetupPaleAutomaton()
     {
         Helpers.RemoveEventFromState("Parry Antic", "TOOK DAMAGE");
@@ -241,6 +244,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             Instance.StartCoroutine(DisplayBigTitle());
             Instance.StartCoroutine(FancyZoomOut(2, 0.675f));
             controlFsm.GetState("Battle Start")!.RemoveActionsOfType<DisplayBossTitle>();
+            Helpers.SetupArena();
         });
         foreach (var stateName in new[] {"Set DiveSlash", "Set Dash Attack", "Set Wind Slash", "Set CrossSlash", "Set Rising Slash"}) controlFsm.GetState(stateName)!.AddMethod(() =>
         {
@@ -299,7 +303,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("RapidSlash")!.AddMethod(() => HeroController.instance.StartInvulnerable(0.1f));
         controlFsm.GetState("Stab 1")!.AddMethod(() => controlFsm.StartCoroutine(Helpers.DelayedTurnAround(0.15f)));
     }
-    public static void SetupPhase2()
+    private static void SetupPhase2()
     {
         controlFsm.GetState("Dash to CS?")!.InsertMethod(() => controlFsm.SendEvent("FINISHED"), 0);
         controlFsm.GetState("DashStab Dash")!.InsertMethod(() =>
@@ -407,7 +411,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("Jump Antic")!.AddAction(new Wait { time = 0.01f, finishEvent = FsmEvent.Finished, realTime = false });
         controlFsm.GetFirstActionOfType<SetFloatValue>("Set Wind Slash")!.floatValue = 9;
     }
-    public static void SetupPhase3()
+    private static void SetupPhase3()
     {
         controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.minValue = 135;
         controlFsm.GetFirstActionOfType<FloatClamp>("Dive L")!.maxValue = 270;
@@ -452,5 +456,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         MirrorYDecel("Stab 4");
         MirrorYDecel("Stab End 2");
         MirrorYDecel("Dive Land");
+        return;
+        void MirrorYDecel(string stateName) => controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationY = controlFsm.GetFirstActionOfType<DecelerateXY>(stateName)!.decelerationX;
     }
 }

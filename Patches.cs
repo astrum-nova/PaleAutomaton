@@ -12,6 +12,7 @@ namespace PaleAutomaton;
 [HarmonyPatch]
 public static class Patches
 {
+    //? Redirect the vanilla boss room 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(GameManager), nameof(GameManager.BeginSceneTransition))]
     public static void GameManager_BeginSceneTransition_Prefix(GameManager __instance, ref GameManager.SceneLoadInfo info)
@@ -39,6 +40,7 @@ public static class Patches
             spawned.name = "CrossSlashSetup";
             if (!CustomBehaviour.crossSlashSetup)
             {
+                //todo: replace this with the asset like projectile
                 CustomBehaviour.crossSlashSetup = Object.Instantiate(go);
                 CustomBehaviour.crossSlashSetup.SetActive(false);
                 CustomBehaviour.crossSlashSetup.name = "CrossSlashSetup";
@@ -74,7 +76,6 @@ public static class Patches
                  !PaleAutomatonPlugin.customComboSequence &&
                  !PaleAutomatonPlugin.PHASE_3) PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.AnticParry());
     }
-
     [HarmonyPrefix]
     [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.NailClash))]
     private static void DamageHero_NailClash_Prefix(DamageHero __instance)

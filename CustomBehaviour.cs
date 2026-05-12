@@ -23,6 +23,10 @@ public static class CustomBehaviour
     public static GameObject groundSpikesCollider = null!;
     public static Rigidbody2D rb = null!;
     public static bool csSpam;
+    public static bool inPhase4Transition;
+    public static readonly List<int> attackMemory = [3, 4, 5];
+    private static string parriedState = "";
+    //! SPAWN CUSTOM OBJECTS
     public static IEnumerator SpawnWindSlash()
     {
         if (!skProjectileSetup)
@@ -46,7 +50,37 @@ public static class CustomBehaviour
         instance.SetActive(false);
         instance.GetComponent<PlayMakerFSM>().Reset();
     }
-    private static string parriedState = "";
+    public static IEnumerator SpawnCrossSlash(float x, float y, float startDelay, float activationDelay, bool randomizePosition = false, float scaleMultiplier = 1)
+    {
+        var xOffset = randomizePosition ? Random.Range(-2, 2) : 0;
+        var yOffset = randomizePosition ? Random.Range(-2, 2) : 0;
+        var rotationOffset = 90 + (randomizePosition ? Random.Range(-10, 10) : 0);
+        var scaleModifier = Random.Range(2f, 2.3f) * scaleMultiplier;
+        yield return new WaitForSeconds(startDelay);
+        var antic = Pools.GetCrossSlashAntic();
+        antic.transform.localScale = new Vector3(1, 1, 1);
+        antic.SetActive(true);
+        antic.transform.position = new Vector3(x + xOffset, y + yOffset, antic.transform.position.z);
+        antic.transform.localScale *= scaleModifier;
+        antic.transform.localScale = antic.transform.localScale with { x = PaleAutomatonPlugin.songKnight.transform.localScale.x };
+        antic.transform.SetRotation2D(rotationOffset + 180);
+        antic.transform.FlipLocalScale(y:true);
+        //todo: remember to prewarm the antic in the pool maybe, same with the crosslashes themselves
+        yield return new WaitForSeconds(activationDelay - startDelay);
+        antic.SetActive(false);
+        var crossSlash = Pools.GetCrossSlash();
+        crossSlash.transform.localScale = new Vector3(1, 1, 1);
+        try { crossSlash.GetComponent<PlayMakerFSM>().GetState("Recycle")!.RemoveActionsOfType<RecycleSelf>(); }
+        catch { /*ignored*/ }
+        crossSlash.SetActive(true);
+        crossSlash.transform.position = new Vector3(x + xOffset, y + yOffset, antic.transform.position.z);
+        crossSlash.transform.localScale *= scaleModifier;
+        crossSlash.transform.localScale = crossSlash.transform.localScale with { x = PaleAutomatonPlugin.songKnight.transform.localScale.x };
+        crossSlash.transform.SetRotation2D(rotationOffset);
+        yield return new WaitForSeconds(0.3f);
+        crossSlash.SetActive(false);
+    }
+    //! MISC
     public static IEnumerator AnticParry()
     {
         var currentState = PaleAutomatonPlugin.controlFsm.ActiveStateName;
@@ -60,6 +94,29 @@ public static class CustomBehaviour
             _ => currentState
         });
     }
+    public static IEnumerator Teleport(float x, float y, string nextState, float delay = 0.2f, float finishNextStateIn = -1, bool lookAtHornet = false)
+    {
+        rb.linearVelocityY = 0;
+        rb.linearVelocityX = 0;
+        PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = true;
+        var transform = PaleAutomatonPlugin.songKnight.transform;
+        PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
+        transform.position = transform.position with { y = 100 };
+        yield return new WaitForSeconds(delay);
+        transform.position = transform.position with { x = x };
+        transform.position = transform.position with { y = y };
+        PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
+        PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = false;
+        PaleAutomatonPlugin.controlFsm.SetState(nextState);
+        if (lookAtHornet) Helpers.LookAtHornet();
+        else PaleAutomatonPlugin.songKnight.transform.rotation = Quaternion.Euler(0, 0, 0);
+        if (finishNextStateIn != -1)
+        {
+            yield return new WaitForSeconds(finishNextStateIn);
+            PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
+        }
+    }
+    //! PHASE TRANSITIONS
     public static IEnumerator Phase2Transition()
     {
         PaleAutomatonPlugin.controlFsm.SetState("Parry Antic");
@@ -95,6 +152,50 @@ public static class CustomBehaviour
             everyFrame = false
         });
     }
+    public static IEnumerator Phase3Transition()
+    {
+        yield return Teleport(100, 100, "First Idle");
+        PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
+        yield return new WaitForSeconds(1);
+        Object.Destroy(PaleAutomatonPlugin.songKnight.transform.Find("WindSlash Hit").gameObject);
+        GameObject.Find("CameraLockArea (1)").transform.localScale = GameObject.Find("CameraLockArea (1)").transform.localScale with { y = GameObject.Find("CameraLockArea (1)").transform.localScale.y + 100 };
+        groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
+        groundSpikesCollider.name = "GroundSpikesCollider";
+        var fallKiller = Object.Instantiate(GameObject.Find("Spike Collider"))!;
+        Helpers.SetupGroundSpikeHitbox(groundSpikesCollider);
+        Helpers.SetupGroundSpikeHitbox(fallKiller);
+        fallKiller.name = "FallKiller";
+        fallKiller.transform.position = fallKiller.transform.position with {y = -6};
+        fallKiller.GetComponent<DamageHero>().SetDamageAmount(999);
+        fallKiller.transform.localScale = fallKiller.transform.localScale with {y = 180};
+        fallKiller.transform.localScale = fallKiller.transform.localScale with {x = 100};
+        fallKiller.AddComponent<NonBouncer>();
+        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.terrainCollider.transform.position = PaleAutomatonPlugin.terrainCollider.transform.position with {y = -50};
+        yield return new WaitForSeconds(0.5f);
+        Helpers.ToggleDownSlashHitbox(true);
+        PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
+        PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
+    }
+    public static IEnumerator Phase4Transition()
+    {
+        inPhase4Transition = true;
+        var hPos = HeroController.instance.transform.position;
+        var yPos = Math.Clamp(hPos.y - 8, 20, 9999);
+        yield return Teleport(hPos.x, yPos, "Windslash A");
+        PaleAutomatonPlugin.songKnight.transform.localScale = PaleAutomatonPlugin.songKnight.transform.localScale with {x = 1};
+        PaleAutomatonPlugin.songKnight.transform.SetRotation2D(90);
+        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.groundSpikesParent.SetActive(false);
+        groundSpikesCollider.SetActive(false);
+        GameObject.Find("strut_bg_song_bridge_example").SetActive(false);
+        yield return new WaitForSeconds(0.2f);
+        PaleAutomatonPlugin.songKnight.transform.SetRotation2D(0);
+        yield return Teleport(hPos.x, 100, "First Idle");
+        inPhase4Transition = false;
+        yield return new WaitForSeconds(0.5f);
+    }
+    //! PHASE 2
     public static IEnumerator RisingSlashStarter()
     {
         PaleAutomatonPlugin.customComboSequence = true;
@@ -195,102 +296,7 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(0.4f);
         PaleAutomatonPlugin.customComboSequence = false;
     }
-    public static IEnumerator Teleport(float x, float y, string nextState, float delay = 0.2f, float finishNextStateIn = -1, bool lookAtHornet = false)
-    {
-        rb.linearVelocityY = 0;
-        rb.linearVelocityX = 0;
-        PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = true;
-        var transform = PaleAutomatonPlugin.songKnight.transform;
-        PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
-        transform.position = transform.position with { y = 100 };
-        yield return new WaitForSeconds(delay);
-        transform.position = transform.position with { x = x };
-        transform.position = transform.position with { y = y };
-        PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect());
-        PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = false;
-        PaleAutomatonPlugin.controlFsm.SetState(nextState);
-        if (lookAtHornet) Helpers.LookAtHornet();
-        else PaleAutomatonPlugin.songKnight.transform.rotation = Quaternion.Euler(0, 0, 0);
-        if (finishNextStateIn != -1)
-        {
-            yield return new WaitForSeconds(finishNextStateIn);
-            PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
-        }
-    }
-    public static IEnumerator SpawnCrossSlash(float x, float y, float startDelay, float activationDelay, bool randomizePosition = false)
-    {
-        var xOffset = randomizePosition ? Random.Range(-2, 2) : 0;
-        var yOffset = randomizePosition ? Random.Range(-2, 2) : 0;
-        var rotationOffset = 90 + (randomizePosition ? Random.Range(-10, 10) : 0);
-        var scaleModifier = Random.Range(2f, 2.3f);
-        yield return new WaitForSeconds(startDelay);
-        var antic = Pools.GetCrossSlashAntic();
-        antic.transform.localScale = new Vector3(1, 1, 1);
-        antic.SetActive(true);
-        antic.transform.position = new Vector3(x + xOffset, y + yOffset, antic.transform.position.z);
-        antic.transform.localScale *= scaleModifier;
-        antic.transform.localScale = antic.transform.localScale with { x = PaleAutomatonPlugin.songKnight.transform.localScale.x };
-        antic.transform.SetRotation2D(rotationOffset + 180);
-        antic.transform.FlipLocalScale(y:true);
-        //todo: remember to prewarm the antic in the pool maybe, same with the crosslashes themselves
-        yield return new WaitForSeconds(activationDelay - startDelay);
-        antic.SetActive(false);
-        var crossSlash = Pools.GetCrossSlash();
-        crossSlash.transform.localScale = new Vector3(1, 1, 1);
-        try { crossSlash.GetComponent<PlayMakerFSM>().GetState("Recycle")!.RemoveActionsOfType<RecycleSelf>(); }
-        catch { /*ignored*/ }
-        crossSlash.SetActive(true);
-        crossSlash.transform.position = new Vector3(x + xOffset, y + yOffset, antic.transform.position.z);
-        crossSlash.transform.localScale *= scaleModifier;
-        crossSlash.transform.localScale = crossSlash.transform.localScale with { x = PaleAutomatonPlugin.songKnight.transform.localScale.x };
-        crossSlash.transform.SetRotation2D(rotationOffset);
-        yield return new WaitForSeconds(0.3f);
-        crossSlash.SetActive(false);
-    }
-    public static bool inPhase4Transition = false;
-    public static IEnumerator Phase4Transition()
-    {
-        inPhase4Transition = true;
-        var hPos = HeroController.instance.transform.position;
-        var yPos = Math.Clamp(hPos.y - 5, 20, 9999);
-        yield return Teleport(hPos.x, yPos, "Windslash A");
-        PaleAutomatonPlugin.songKnight.transform.localScale = PaleAutomatonPlugin.songKnight.transform.localScale with {x = 1};
-        PaleAutomatonPlugin.songKnight.transform.SetRotation2D(90);
-        yield return new WaitForSeconds(0.5f);
-        PaleAutomatonPlugin.groundSpikesParent.SetActive(false);
-        groundSpikesCollider.SetActive(false);
-        GameObject.Find("strut_bg_song_bridge_example").SetActive(false);
-        yield return new WaitForSeconds(0.2f);
-        PaleAutomatonPlugin.songKnight.transform.SetRotation2D(0);
-        yield return Teleport(hPos.x, 100, "First Idle");
-        inPhase4Transition = false;
-        yield return new WaitForSeconds(0.5f);
-    }
-    public static IEnumerator Phase3Transition()
-    {
-        yield return Teleport(100, 100, "First Idle");
-        PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
-        yield return new WaitForSeconds(1);
-        Object.Destroy(PaleAutomatonPlugin.songKnight.transform.Find("WindSlash Hit").gameObject);
-        GameObject.Find("CameraLockArea (1)").transform.localScale = GameObject.Find("CameraLockArea (1)").transform.localScale with { y = GameObject.Find("CameraLockArea (1)").transform.localScale.y + 100 };
-        groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
-        groundSpikesCollider.name = "GroundSpikesCollider";
-        var fallKiller = Object.Instantiate(GameObject.Find("Spike Collider"))!;
-        Helpers.SetupGroundSpikeHitbox(groundSpikesCollider);
-        Helpers.SetupGroundSpikeHitbox(fallKiller);
-        fallKiller.name = "FallKiller";
-        fallKiller.transform.position = fallKiller.transform.position with {y = -6};
-        fallKiller.GetComponent<DamageHero>().SetDamageAmount(999);
-        fallKiller.transform.localScale = fallKiller.transform.localScale with {y = 180};
-        fallKiller.transform.localScale = fallKiller.transform.localScale with {x = 100};
-        yield return new WaitForSeconds(0.5f);
-        PaleAutomatonPlugin.terrainCollider.transform.position = PaleAutomatonPlugin.terrainCollider.transform.position with {y = -50};
-        yield return new WaitForSeconds(0.5f);
-        Helpers.ToggleDownSlashHitbox(true);
-        PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
-        PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
-    }
-    public static List<int> attackMemory = [3, 4, 5];
+    //! PHASE 3+4
     public static IEnumerator SelectPhase3Attack()
     {
         if (!PaleAutomatonPlugin.bossScene) yield break;
@@ -352,7 +358,7 @@ public static class CustomBehaviour
         yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.2f);
         yield return new WaitForSeconds(0.2f);
         hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 8.5f * direction, hcPos.y + 5, "Dive Dir", delay:0, finishNextStateIn: 0.1f);
+        yield return Teleport(hcPos.x + 8.5f * direction, hcPos.y + 5, "Dive Dir", delay:0, finishNextStateIn: 0.2f);
         yield return new WaitForSeconds(0.2f);
         hcPos = HeroController.instance.transform.position;
         PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0f, 0.4f));
@@ -440,7 +446,6 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 15;
         yield return new WaitForSeconds(0.2f);
     }
-    
     //! CUT ATTACKS
     /*
     public static IEnumerator FiveDive()
@@ -471,8 +476,8 @@ public static class CustomBehaviour
     }
     public static IEnumerator DashSlashIntoCrossSlash()
     {
-        //todo: instead of stall tps try tping into dashstab antic and letting it go normally without finishing the state early, and try using the tp delay
-        //todo: also update the hcpos for the crossslashes too cause its using an old pos
+        //instead of stall tps try tping into dashstab antic and letting it go normally without finishing the state early, and try using the tp delay
+        //also update the hcpos for the crossslashes too cause its using an old pos
         var direction = Random.value > 0.5f ? -1 : 1;
         var hcPos = HeroController.instance.transform.position;
         var xPos = hcPos.x + 13 * direction;

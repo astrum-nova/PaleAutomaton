@@ -6,6 +6,7 @@ using GlobalEnums;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace PaleAutomaton;
@@ -116,21 +117,20 @@ public static class Helpers
     public static float GetAdaptedSpeed(float speed, float min, float max) => Mathf.Clamp(Math.Abs(HeroController.instance.transform.position.x - PaleAutomatonPlugin.songKnight.transform.position.x) * speed, min, max);
     public static Vector2[] originalDownSlash = null!;
     public static Vector2[] originalDownSlashAlt = null!;
-    private static readonly Vector2[] expandedDownSlash =
-    [
-        new(3.524622f, 0.000000f),    // Right Center
+    private static readonly Vector2[] expandedDownSlash = [
+        new(3.524622f, 0.000000f),
         new(3.256326f, 1.211478f),
         new(2.492284f, 2.238519f),
         new(1.348815f, 2.924766f),
-        new(0.000000f, 3.165744f),    // Top Reference (Unchanged)
+        new(0.000000f, 3.165744f),
         new(-1.348815f, 2.924766f),
         new(-2.492284f, 2.238519f),
         new(-3.256326f, 1.211478f),
-        new(-3.524622f, 0.000000f),   // Left Center
+        new(-3.524622f, 0.000000f),
         new(-3.256326f, -1.211478f),
         new(-2.492284f, -2.238519f),
         new(-1.348815f, -2.924766f),
-        new(-0.000000f, -3.165744f),  // Bottom Reference (Unchanged)
+        new(-0.000000f, -3.165744f),
         new(1.348815f, -2.924766f),
         new(2.492284f, -2.238519f),
         new(3.256326f, -1.211478f),
@@ -140,5 +140,63 @@ public static class Helpers
         if (originalDownSlash == null || originalDownSlashAlt == null) return;
         HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlash").gameObject.GetComponent<PolygonCollider2D>().SetPath(0, useExpanded ? expandedDownSlash : originalDownSlash);
         HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlashAlt").gameObject.GetComponent<PolygonCollider2D>().SetPath(0, useExpanded ? expandedDownSlash : originalDownSlashAlt);
+    }
+    private static readonly HashSet<string> arenaWhitelist = [
+        "Black Thread States",
+        "strut_bg_song_bridge_example",
+        "song_city_default (1)",
+        "GameObject (11)",
+        "wind_tiled_set",
+        "BlurPlane",
+        "CameraLockArea (1)",
+        "Camera Wind Region",
+        "terrain collider",
+        "Boss Scene - To Additive Load(Clone)",
+    ];
+    private static readonly HashSet<string> arenaBlacklist = [
+        "dust_root_bg_set (1)",
+        "dust_root_bg_set",
+        "black_fader_moon (4)",
+    ];
+    public static void SetupArena()
+    {
+        foreach (var gameObject in SceneManager.GetActiveScene().GetRootGameObjects())
+        {
+            if (arenaWhitelist.Contains(gameObject.name))
+            {
+                switch (gameObject.name)
+                {
+                    case "CameraLockArea (1)":
+                        break;
+                    case "strut_bg_song_bridge_example":
+                        gameObject.transform.Find("bridge_under_strut_plat_45_angle (8)").gameObject.SetActive(false);
+                        break;
+                    case "BlurPlane":
+                        gameObject.transform.SetParent(HeroController.instance.transform);
+                        gameObject.transform.position = gameObject.transform.position with { y = gameObject.transform.position.y - 10 };
+                        break;
+                    case "Black Thread States":
+                        var targetChild = gameObject.transform.GetChild(0)!;
+                        foreach (var objName in (string[])[
+                                     "hanging_garden__0013_fence_mid (9)",
+                                     "song_city_pipes_0016_1 (16)",
+                                     "song_fence_standard (8)",
+                                     "song_city_pipes_0016_1 (12)",
+                                     "song_city_pipes_0016_1 (11)",
+                                     "song_city_pipes_0016_1 (15)",
+                                     "hanging_garden__0013_fence_mid (10)",
+                                     "song_city_pipes_0016_1 (9)",
+                                     "hanging_garden__0017_arch_brace (6)",
+                                     "hanging_garden__0013_fence_mid (16)",
+                                     "hanging_garden__0013_fence_mid (17)",
+                                     "break_lamp_slab_bridge",
+                                     "arborium_tunnel_simple",
+                                 ]) targetChild.Find(objName).gameObject.SetActive(false);
+                        break;
+                }
+                continue;
+            }
+            if (gameObject.transform.position.z < 25 || arenaBlacklist.Contains(gameObject.name)) gameObject.SetActive(false);
+        }
     }
 }
