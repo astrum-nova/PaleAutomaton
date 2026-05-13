@@ -79,7 +79,6 @@ public static class Helpers
         groundSpikesCollider.transform.position = groundSpikesCollider.transform.position with { y = 12.5f };
         groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { y = 180 };
         groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { x = 16.4f };
-        PaleAutomatonPlugin.groundSpikesParent.SetActive(true);
     }
     public static IEnumerator TpEffect()
     {
@@ -162,6 +161,9 @@ public static class Helpers
     ];
     public static GameObject mainTerrainArt = null!;
     public static GameObject clonedTerrainArt = null!;
+    public static GameObject clonedGroundSpikes = null!;
+    public static GameObject clonedGroundSpikesCollider = null!;
+    public static GameObject fallKiller = null!;
     public static GameObject cameraLockArea = null!;
     public static void SetupArena()
     {
@@ -176,15 +178,28 @@ public static class Helpers
         // Hitboxes
         PaleAutomatonPlugin.terrainCollider.transform.localScale = PaleAutomatonPlugin.terrainCollider.transform.localScale with { x = 1.1f };
         PaleAutomatonPlugin.terrainCollider.transform.position = PaleAutomatonPlugin.terrainCollider.transform.position with { x = 33.0313f };
+        
+        CustomBehaviour.groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
+        CustomBehaviour.groundSpikesCollider.name = "GroundSpikesCollider";
+        SetupGroundSpikeHitbox(CustomBehaviour.groundSpikesCollider);
+        fallKiller = Object.Instantiate(GameObject.Find("Spike Collider"))!;
+        SetupGroundSpikeHitbox(fallKiller);
+        fallKiller.name = "FallKiller";
+        fallKiller.transform.position = fallKiller.transform.position with {y = -6};
+        fallKiller.GetComponent<DamageHero>().SetDamageAmount(999);
+        fallKiller.transform.localScale = fallKiller.transform.localScale with {y = 500};
+        fallKiller.transform.localScale = fallKiller.transform.localScale with {x = 100};
+        fallKiller.AddComponent<NonBouncer>();
         foreach (var gameObject in SceneManager.GetActiveScene().GetRootGameObjects())
         {
+            if (gameObject.name.Contains("Audio")) continue;
             if (arenaWhitelist.Contains(gameObject.name))
             {
                 switch (gameObject.name)
                 {
                     case "CameraLockArea (1)":
-                        //todo: fix camlock 1 shenanigans
                         gameObject.transform.position = gameObject.transform.position with { x = 150.7405f };
+                        gameObject.transform.localScale = gameObject.transform.localScale with { x = gameObject.transform.localScale.x * 5 };
                         cameraLockArea = gameObject;
                         InfiniteTerrainMover.cameraLockArea = gameObject.GetComponent<CameraLockArea>();
                         break;
@@ -244,7 +259,9 @@ public static class Helpers
                                      "sc_metal_strut_back (32)",
                                  ]) gameObject.transform.Find(objName).gameObject.SetActive(false);
                         mainTerrainArt = gameObject;
+                        PaleAutomatonPlugin.terrainCollider.name = "Terrain Collider";
                         PaleAutomatonPlugin.terrainCollider.transform.SetParent(mainTerrainArt.transform);
+                        CustomBehaviour.groundSpikesCollider.transform.SetParent(mainTerrainArt.transform);
                         var infiniteTerrainMoverLeft = new GameObject("Infinite Terrain Mover Left");
                         var colliderLeft = infiniteTerrainMoverLeft.AddComponent<BoxCollider2D>();
                         colliderLeft.isTrigger = true;
@@ -262,15 +279,24 @@ public static class Helpers
                         var itmRight = infiniteTerrainMoverRight.AddComponent<InfiniteTerrainMover>();
                         itmLeft.other = infiniteTerrainMoverRight;
                         itmRight.other = infiniteTerrainMoverLeft;
-                        
+                        //? The first set is almost working right, but the first set is overlapping with the last spike set of the cloned ground
+                        var firstSet = PaleAutomatonPlugin.groundSpikesParent.transform.GetChild(0)!;
+                        firstSet.GetChild(0).gameObject.SetActive(false);
+                        firstSet.GetChild(2).gameObject.SetActive(false);
+                        firstSet.GetChild(3).gameObject.SetActive(false);
+                        firstSet.GetChild(1).position = new Vector3(45.5544f, 10.9078f, -1.4537f);
+                        firstSet.GetChild(6).position = new Vector3(49.7621f, 10.9079f, -1.4537f);
+                        firstSet.GetChild(7).position = new Vector3(48.4338f, 10.9079f, -1.4537f);
+                        PaleAutomatonPlugin.groundSpikesParent.transform.SetParent(mainTerrainArt.transform);
                         clonedTerrainArt = Object.Instantiate(mainTerrainArt);
+                        clonedGroundSpikes = clonedTerrainArt.transform.Find("GroundSpikesParent").gameObject;
+                        clonedGroundSpikesCollider = clonedTerrainArt.transform.Find("GroundSpikeColliderComponent").gameObject;
+                        clonedGroundSpikesCollider.SetActive(false);
                         clonedTerrainArt.transform.position = new Vector3(-98.7366f, -34.5f, -5.1624f);
                         clonedTerrainArt.transform.Find("Infinite Terrain Mover Right").gameObject.SetActive(false);
                         clonedTerrainArt.transform.Find("Infinite Terrain Mover Left").gameObject.SetActive(true);
                         mainTerrainArt.transform.Find("Infinite Terrain Mover Right").gameObject.SetActive(true);
                         mainTerrainArt.transform.Find("Infinite Terrain Mover Left").gameObject.SetActive(false);
-                        //var right = Object.Instantiate(gameObject);
-                        //right.transform.position = new Vector3(257.8815f, -34.5f, -5.1624f);
                         mainTerrainArt.name = "Main Terrain Art";
                         clonedTerrainArt.name = "Cloned Terrain Art";
                         break;
@@ -301,6 +327,8 @@ public static class Helpers
             }
             //todo: mirror some bg objects so it doesnt look scuffed asf
             if (gameObject.transform.position.z < 25 || arenaBlacklist.Contains(gameObject.name)) gameObject.SetActive(false);
+            PaleAutomatonPlugin.terrainCollider.SetActive(true);
+            fallKiller.SetActive(true);
         }
     }
 }

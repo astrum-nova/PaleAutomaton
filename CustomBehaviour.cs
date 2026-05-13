@@ -158,21 +158,14 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
         yield return new WaitForSeconds(1);
         Object.Destroy(PaleAutomatonPlugin.songKnight.transform.Find("WindSlash Hit").gameObject);
-        GameObject.Find("CameraLockArea (1)").transform.localScale = GameObject.Find("CameraLockArea (1)").transform.localScale with { y = GameObject.Find("CameraLockArea (1)").transform.localScale.y + 100 };
-        //! spike collider remains disabled, add this to the whitelist and figure it out or something or cache it there
-        groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
-        groundSpikesCollider.name = "GroundSpikesCollider";
-        var fallKiller = Object.Instantiate(GameObject.Find("Spike Collider"))!;
-        Helpers.SetupGroundSpikeHitbox(groundSpikesCollider);
-        Helpers.SetupGroundSpikeHitbox(fallKiller);
-        fallKiller.name = "FallKiller";
-        fallKiller.transform.position = fallKiller.transform.position with {y = -6};
-        fallKiller.GetComponent<DamageHero>().SetDamageAmount(999);
-        fallKiller.transform.localScale = fallKiller.transform.localScale with {y = 180};
-        fallKiller.transform.localScale = fallKiller.transform.localScale with {x = 100};
-        fallKiller.AddComponent<NonBouncer>();
+        Helpers.clonedGroundSpikes.SetActive(true);
+        Helpers.clonedGroundSpikesCollider.SetActive(true);
+        PaleAutomatonPlugin.groundSpikesParent.SetActive(true);
+        groundSpikesCollider.SetActive(true);
         yield return new WaitForSeconds(0.5f);
         PaleAutomatonPlugin.terrainCollider.transform.position = PaleAutomatonPlugin.terrainCollider.transform.position with {y = -50};
+        var otherTerrainCollider = Helpers.clonedTerrainArt.transform.Find("Terrain Collider");
+        otherTerrainCollider.transform.position = otherTerrainCollider.transform.position with { y = -50 };
         yield return new WaitForSeconds(0.5f);
         Helpers.ToggleDownSlashHitbox(true);
         PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
@@ -188,8 +181,8 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.songKnight.transform.SetRotation2D(90);
         yield return new WaitForSeconds(0.5f);
         PaleAutomatonPlugin.groundSpikesParent.SetActive(false);
-        groundSpikesCollider.SetActive(false);
-        GameObject.Find("strut_bg_song_bridge_example").SetActive(false);
+        GameObject.Find("Main Terrain Art").SetActive(false);
+        GameObject.Find("Cloned Terrain Art").SetActive(false);
         yield return new WaitForSeconds(0.2f);
         PaleAutomatonPlugin.songKnight.transform.SetRotation2D(0);
         yield return Teleport(hPos.x, 100, "First Idle");

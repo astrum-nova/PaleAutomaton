@@ -40,7 +40,7 @@ public static class Patches
             spawned.name = "CrossSlashSetup";
             if (!CustomBehaviour.crossSlashSetup)
             {
-                //todo: replace this with the asset like projectile
+                //todo: replace __instance with the asset like projectile
                 CustomBehaviour.crossSlashSetup = Object.Instantiate(go);
                 CustomBehaviour.crossSlashSetup.SetActive(false);
                 CustomBehaviour.crossSlashSetup.name = "CrossSlashSetup";
@@ -121,5 +121,40 @@ public static class Patches
     {
         if (!PaleAutomatonPlugin.bossScene) return;
         if (__instance.name == "Song Knight") __instance.enabled = false;
+    }
+
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(CameraController), nameof(CameraController.LockToArea))]
+    public static bool CameraController_LockToArea(CameraController __instance, CameraLockArea lockArea)
+    {
+        if (!PaleAutomatonPlugin.bossScene || lockArea.gameObject.name != "CameraLockArea (1)") return true;
+        if (!__instance.lockZoneList.Contains(lockArea) || lockArea == __instance.currentLockArea)
+        {
+            if (lockArea != __instance.currentLockArea) __instance.lockZoneList.Add(lockArea);
+            if (__instance.currentLockArea != null && __instance.currentLockArea.priority > lockArea.priority) return false;
+            if (lockArea.IgnoreInSuperjump && __instance.hero_ctrl.cState.superDashing) return false;
+            __instance.currentLockArea = lockArea;
+            if (__instance.mode != CameraController.CameraMode.FROZEN) __instance.SetMode(CameraController.CameraMode.LOCKED);
+            __instance.xLockMin = lockArea.cameraXMin;
+            __instance.xLockMax = lockArea.cameraXMax;
+            __instance.yLockMin = lockArea.cameraYMin < 8.3f ? 8.3f : lockArea.cameraYMin;
+            __instance.yLockMax = lockArea.cameraYMax;
+            if (__instance.startLockedTimer > 0f && (__instance.hero_ctrl.transitionState != HeroTransitionState.WAITING_TO_TRANSITION || __instance.instantLockedArea.Contains(lockArea)))
+            {
+                var position = __instance.hero_ctrl.transform.position;
+                position.x += __instance.camTarget.xOffset;
+                __instance.camTarget.transform.SetPosition2D(__instance.KeepWithinLockBounds(position));
+                __instance.camTarget.destination = __instance.camTarget.transform.position;
+                __instance.camTarget.EnterLockZoneInstant(__instance.xLockMin, __instance.xLockMax, __instance.yLockMin, __instance.yLockMax);
+                __instance.gameObject.transform.SetPosition2D(__instance.KeepWithinLockBounds(position));
+                __instance.destination = __instance.gameObject.transform.position;
+                __instance.instantLockedArea.Add(lockArea);
+                lockArea.OnDestroyEvent += __instance.OnLockAreaDestroyed;
+                return false;
+            }
+        }
+        var hcPos = HeroController.instance.transform.position.x;
+        __instance.camTarget.EnterLockZone(hcPos - 500, hcPos + 500, __instance.yLockMin, __instance.yLockMax);
+        return false;
     }
 }
