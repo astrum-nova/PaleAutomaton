@@ -149,6 +149,7 @@ public static class Helpers
         "GameObject (11)",
         "wind_tiled_set",
         "BlurPlane",
+        "Spike Collider",
         "CameraLockArea (1)",
         "Camera Wind Region",
         "terrain collider",
@@ -159,8 +160,12 @@ public static class Helpers
         "dust_root_bg_set",
         "black_fader_moon (4)",
     ];
+    public static GameObject mainTerrainArt = null!;
+    public static GameObject clonedTerrainArt = null!;
+    public static GameObject cameraLockArea = null!;
     public static void SetupArena()
     {
+        // Camera
         GameCameras.instance.cameraController.SetAllowExitingSceneBounds(true);
         var sceneBorderRemover = new GameObject("Scene Border Remover");
         Object.DontDestroyOnLoad(sceneBorderRemover);
@@ -168,6 +173,9 @@ public static class Helpers
         SceneBorderRemover.Init();
         sceneBorderRemover.AddComponent<SceneBorderRemover>();
         sceneBorderRemover.transform.position = new Vector3(0, 0, 0.1f);
+        // Hitboxes
+        PaleAutomatonPlugin.terrainCollider.transform.localScale = PaleAutomatonPlugin.terrainCollider.transform.localScale with { x = 1.1f };
+        PaleAutomatonPlugin.terrainCollider.transform.position = PaleAutomatonPlugin.terrainCollider.transform.position with { x = 33.0313f };
         foreach (var gameObject in SceneManager.GetActiveScene().GetRootGameObjects())
         {
             if (arenaWhitelist.Contains(gameObject.name))
@@ -176,7 +184,12 @@ public static class Helpers
                 {
                     case "CameraLockArea (1)":
                         //todo: fix camlock 1 shenanigans
-                        gameObject.SetActive(false);
+                        gameObject.transform.position = gameObject.transform.position with { x = 150.7405f };
+                        cameraLockArea = gameObject;
+                        InfiniteTerrainMover.cameraLockArea = gameObject.GetComponent<CameraLockArea>();
+                        break;
+                    case "Spike Collider":
+                        gameObject.transform.position = gameObject.transform.position with { y = -1000 };
                         break;
                     case "wind_tiled_set":
                         gameObject.transform.Find("plane").localScale *= 100;
@@ -230,10 +243,36 @@ public static class Helpers
                                      "sc_metal_strut_back (33)",
                                      "sc_metal_strut_back (32)",
                                  ]) gameObject.transform.Find(objName).gameObject.SetActive(false);
-                        var left = Object.Instantiate(gameObject);
-                        left.transform.position = new Vector3(-98.7366f, -34.5f, -5.1624f);
-                        var right = Object.Instantiate(gameObject);
-                        right.transform.position = new Vector3(257.8815f, -34.5f, -5.1624f);
+                        mainTerrainArt = gameObject;
+                        PaleAutomatonPlugin.terrainCollider.transform.SetParent(mainTerrainArt.transform);
+                        var infiniteTerrainMoverLeft = new GameObject("Infinite Terrain Mover Left");
+                        var colliderLeft = infiniteTerrainMoverLeft.AddComponent<BoxCollider2D>();
+                        colliderLeft.isTrigger = true;
+                        infiniteTerrainMoverLeft.transform.localScale = new Vector3(1, 10000, 1);
+                        infiniteTerrainMoverLeft.transform.position = infiniteTerrainMoverLeft.transform.position with { x = 75 };
+                        infiniteTerrainMoverLeft.transform.SetParent(gameObject.transform);
+                        var infiniteTerrainMoverRight = new GameObject("Infinite Terrain Mover Right");
+                        var colliderRight = infiniteTerrainMoverRight.AddComponent<BoxCollider2D>();
+                        colliderRight.isTrigger = true;
+                        infiniteTerrainMoverRight.transform.localScale = new Vector3(1, 10000, 1);
+                        infiniteTerrainMoverRight.transform.position = infiniteTerrainMoverRight.transform.position with { x = 185 };
+                        infiniteTerrainMoverRight.transform.SetParent(gameObject.transform);
+                        
+                        var itmLeft = infiniteTerrainMoverLeft.AddComponent<InfiniteTerrainMover>();
+                        var itmRight = infiniteTerrainMoverRight.AddComponent<InfiniteTerrainMover>();
+                        itmLeft.other = infiniteTerrainMoverRight;
+                        itmRight.other = infiniteTerrainMoverLeft;
+                        
+                        clonedTerrainArt = Object.Instantiate(mainTerrainArt);
+                        clonedTerrainArt.transform.position = new Vector3(-98.7366f, -34.5f, -5.1624f);
+                        clonedTerrainArt.transform.Find("Infinite Terrain Mover Right").gameObject.SetActive(false);
+                        clonedTerrainArt.transform.Find("Infinite Terrain Mover Left").gameObject.SetActive(true);
+                        mainTerrainArt.transform.Find("Infinite Terrain Mover Right").gameObject.SetActive(true);
+                        mainTerrainArt.transform.Find("Infinite Terrain Mover Left").gameObject.SetActive(false);
+                        //var right = Object.Instantiate(gameObject);
+                        //right.transform.position = new Vector3(257.8815f, -34.5f, -5.1624f);
+                        mainTerrainArt.name = "Main Terrain Art";
+                        clonedTerrainArt.name = "Cloned Terrain Art";
                         break;
                     case "BlurPlane":
                         gameObject.transform.SetParent(HeroController.instance.transform);

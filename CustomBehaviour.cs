@@ -159,6 +159,7 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(1);
         Object.Destroy(PaleAutomatonPlugin.songKnight.transform.Find("WindSlash Hit").gameObject);
         GameObject.Find("CameraLockArea (1)").transform.localScale = GameObject.Find("CameraLockArea (1)").transform.localScale with { y = GameObject.Find("CameraLockArea (1)").transform.localScale.y + 100 };
+        //! spike collider remains disabled, add this to the whitelist and figure it out or something or cache it there
         groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
         groundSpikesCollider.name = "GroundSpikesCollider";
         var fallKiller = Object.Instantiate(GameObject.Find("Spike Collider"))!;
