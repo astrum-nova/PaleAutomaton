@@ -52,14 +52,14 @@ public static class CustomBehaviour
     }
     public static IEnumerator SpawnCrossSlash(float x, float y, float startDelay, float activationDelay, bool randomizePosition = false, float scaleMultiplier = 1, bool csStarter = false, bool iframes = false)
     {
-        var xOffset = randomizePosition ? Random.Range(-2, 2) : 0;
-        var yOffset = randomizePosition ? Random.Range(-2, 2) : 0;
-        if (csStarter)
+        var xOffset = randomizePosition ? Random.Range(-2, 2) + 0.00001f : 0;
+        var yOffset = randomizePosition ? Random.Range(-2, 2) + 0.00001f : 0;
+        if (csStarter && randomizePosition)
         {
             xOffset /= 2;
             yOffset /= 2;
         }
-        var rotationOffset = 90 + (randomizePosition ? Random.Range(-10, 10) : 0);
+        var rotation = 90 + (randomizePosition ? Random.Range(-10, 10) : 0) + (csStarter && PaleAutomatonPlugin.songKnight.transform.localScale.x == 1 ? 270 : 90);
         var scaleModifier = Random.Range(2f, 2.3f) * scaleMultiplier;
         yield return new WaitForSeconds(startDelay);
         var antic = Pools.GetCrossSlashAntic();
@@ -67,7 +67,7 @@ public static class CustomBehaviour
         antic.SetActive(true);
         antic.transform.position = new Vector3(x + xOffset, y + yOffset, antic.transform.position.z);
         antic.transform.localScale *= scaleModifier;
-        antic.transform.SetRotation2D(rotationOffset + (csStarter && PaleAutomatonPlugin.songKnight.transform.localScale.x == 1 ? 270 : 90));
+        antic.transform.SetRotation2D(rotation);
         antic.transform.FlipLocalScale(y:true);
         yield return new WaitForSeconds(activationDelay - startDelay);
         antic.SetActive(false);
@@ -79,7 +79,7 @@ public static class CustomBehaviour
         crossSlash.SetActive(true);
         crossSlash.transform.position = antic.transform.position;
         crossSlash.transform.localScale *= scaleModifier;
-        crossSlash.transform.rotation = antic.transform.rotation;
+        crossSlash.transform.SetRotation2D(rotation - 20);
         yield return new WaitForSeconds(0.3f);
         crossSlash.SetActive(false);
     }
