@@ -50,10 +50,15 @@ public static class CustomBehaviour
         instance.SetActive(false);
         instance.GetComponent<PlayMakerFSM>().Reset();
     }
-    public static IEnumerator SpawnCrossSlash(float x, float y, float startDelay, float activationDelay, bool randomizePosition = false, float scaleMultiplier = 1, bool csStarter = false)
+    public static IEnumerator SpawnCrossSlash(float x, float y, float startDelay, float activationDelay, bool randomizePosition = false, float scaleMultiplier = 1, bool csStarter = false, bool iframes = false)
     {
         var xOffset = randomizePosition ? Random.Range(-2, 2) : 0;
         var yOffset = randomizePosition ? Random.Range(-2, 2) : 0;
+        if (csStarter)
+        {
+            xOffset /= 2;
+            yOffset /= 2;
+        }
         var rotationOffset = 90 + (randomizePosition ? Random.Range(-10, 10) : 0);
         var scaleModifier = Random.Range(2f, 2.3f) * scaleMultiplier;
         yield return new WaitForSeconds(startDelay);
@@ -70,6 +75,7 @@ public static class CustomBehaviour
         crossSlash.transform.localScale = new Vector3(1, 1, 1);
         try { crossSlash.GetComponent<PlayMakerFSM>().GetState("Recycle")!.RemoveActionsOfType<RecycleSelf>(); }
         catch { /*ignored*/ }
+        if (iframes) HeroController.instance.StartInvulnerable(0.1f);
         crossSlash.SetActive(true);
         crossSlash.transform.position = antic.transform.position;
         crossSlash.transform.localScale *= scaleModifier;
@@ -413,16 +419,31 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<Wait>("CS Antic")!.time = anticTime;
         var direction = Random.value > 0.5f ? -1 : 1;
         var hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 3 * direction, hcPos.y + 2, "CS Antic");
-        csSpam = true;
-        //todo: randomize the order in which these happen
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 7, hcPos.y - 5, 0.1f, anticTime + 0.014f, true));
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 7, hcPos.y - 5, 0.2f, anticTime + 0.015f, true));
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 10, hcPos.y + 0, 0.3f, anticTime + 0.012f, true));
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 10, hcPos.y + 0, 0.4f, anticTime + 0.013f, true));
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 0, hcPos.y + 8, 0.5f, anticTime + 0.011f, true));
+        yield return Teleport(hcPos.x + 3 * direction, hcPos.y - 2, "CS Antic", lookAtHornet:true);
         yield return new WaitForSeconds(anticTime + 0.2f);
-        csSpam = false;
+        hcPos = HeroController.instance.transform.position;
+        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(hcPos.x, hcPos.y + 500, "First Idle"));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0, 0.3f, csStarter:true, randomizePosition:true, iframes:true));
+        yield return new WaitForSeconds(0.6f);
+        hcPos = HeroController.instance.transform.position;
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0, 0.3f, csStarter:true, randomizePosition:true, iframes:true));
+        yield return Teleport(hcPos.x + 3 * -direction, hcPos.y - 2, "CS Antic", lookAtHornet:true);
+        yield return new WaitForSeconds(anticTime + 0.2f);
+        hcPos = HeroController.instance.transform.position;
+        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(hcPos.x, hcPos.y + 500, "First Idle"));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0, 0.3f, csStarter:true, randomizePosition:true, iframes:true));
+        yield return new WaitForSeconds(0.6f);
+        hcPos = HeroController.instance.transform.position;
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0, 0.3f, csStarter:true, randomizePosition:true, iframes:true));
+        yield return Teleport(hcPos.x + 3 * direction, hcPos.y - 2, "CS Antic", lookAtHornet:true);
+        yield return new WaitForSeconds(anticTime + 0.2f);
+        hcPos = HeroController.instance.transform.position;
+        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(hcPos.x, hcPos.y + 500, "First Idle"));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0, 0.3f, csStarter:true, randomizePosition:true, iframes:true));
+        yield return new WaitForSeconds(0.6f);
+        hcPos = HeroController.instance.transform.position;
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0, 0.3f, csStarter:true, randomizePosition:true, iframes:true));
+        yield return new WaitForSeconds(0.6f);
     }
     public static IEnumerator TripleRisingSlash()
     {
@@ -443,10 +464,7 @@ public static class CustomBehaviour
         hcPos = HeroController.instance.transform.position;
         yield return Teleport(hcPos.x, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.4f);
         yield return new WaitForSeconds(0.5f);
-        if (Random.value > 0.5f || true)
-        {
-            PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
-        }
+        PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
         yield return new WaitForSeconds(0.2f);
         PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = -80;
@@ -508,6 +526,22 @@ public static class CustomBehaviour
         xPos = hcPos.x + 13 * direction;
         yield return Teleport(xPos, hcPos.y + Random.Range(-3, 3), "DashStab Antic", finishNextStateIn: 0.4f);
         yield return new WaitForSeconds(0.3f);
+    }
+    public static IEnumerator CrossSlashSpam()
+    {
+        var anticTime = 0.8f;
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<Wait>("CS Antic")!.time = anticTime;
+        var direction = Random.value > 0.5f ? -1 : 1;
+        var hcPos = HeroController.instance.transform.position;
+        yield return Teleport(hcPos.x + 3 * direction, hcPos.y + 2, "CS Antic");
+        csSpam = true;
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 7, hcPos.y - 5, 0.1f, anticTime + 0.014f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 7, hcPos.y - 5, 0.2f, anticTime + 0.015f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 10, hcPos.y + 0, 0.3f, anticTime + 0.012f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 10, hcPos.y + 0, 0.4f, anticTime + 0.013f, true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 0, hcPos.y + 8, 0.5f, anticTime + 0.011f, true));
+        yield return new WaitForSeconds(anticTime + 0.2f);
+        csSpam = false;
     }
     */
 }
