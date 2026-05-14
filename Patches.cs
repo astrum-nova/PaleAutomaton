@@ -49,8 +49,8 @@ public static class Patches
             }
         } else if (spawned.name.StartsWith("Song Knight Projectile"))
         {
-            go.SetActive(false);
             PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.SpawnWindSlash());
+            Object.Destroy(go);
         }
     }
     [HarmonyPrefix]

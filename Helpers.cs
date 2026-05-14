@@ -141,6 +141,11 @@ public static class Helpers
         HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlash").gameObject.GetComponent<PolygonCollider2D>().SetPath(0, useExpanded ? expandedDownSlash : originalDownSlash);
         HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlashAlt").gameObject.GetComponent<PolygonCollider2D>().SetPath(0, useExpanded ? expandedDownSlash : originalDownSlashAlt);
     }
+    public static void DisableChargingEffects()
+    {
+        PaleAutomatonPlugin.songKnight.transform.GetChild(17).gameObject.SetActive(false);
+        PaleAutomatonPlugin.songKnight.transform.GetChild(18).gameObject.SetActive(false);
+    }
     private static readonly HashSet<string> arenaWhitelist = [
         "Black Thread States",
         "strut_bg_song_bridge_example",
@@ -265,13 +270,13 @@ public static class Helpers
                         var infiniteTerrainMoverLeft = new GameObject("Infinite Terrain Mover Left");
                         var colliderLeft = infiniteTerrainMoverLeft.AddComponent<BoxCollider2D>();
                         colliderLeft.isTrigger = true;
-                        infiniteTerrainMoverLeft.transform.localScale = new Vector3(1, 10000, 1);
+                        infiniteTerrainMoverLeft.transform.localScale = new Vector3(1, 100000, 1);
                         infiniteTerrainMoverLeft.transform.position = infiniteTerrainMoverLeft.transform.position with { x = 75 };
                         infiniteTerrainMoverLeft.transform.SetParent(gameObject.transform);
                         var infiniteTerrainMoverRight = new GameObject("Infinite Terrain Mover Right");
                         var colliderRight = infiniteTerrainMoverRight.AddComponent<BoxCollider2D>();
                         colliderRight.isTrigger = true;
-                        infiniteTerrainMoverRight.transform.localScale = new Vector3(1, 10000, 1);
+                        infiniteTerrainMoverRight.transform.localScale = new Vector3(1, 100000, 1);
                         infiniteTerrainMoverRight.transform.position = infiniteTerrainMoverRight.transform.position with { x = 185 };
                         infiniteTerrainMoverRight.transform.SetParent(gameObject.transform);
                         
@@ -279,7 +284,7 @@ public static class Helpers
                         var itmRight = infiniteTerrainMoverRight.AddComponent<InfiniteTerrainMover>();
                         itmLeft.other = infiniteTerrainMoverRight;
                         itmRight.other = infiniteTerrainMoverLeft;
-                        //? The first set is almost working right, but the first set is overlapping with the last spike set of the cloned ground
+                        //? The first set is almost working right, but its overlapping with the last spike set of the cloned ground
                         var firstSet = PaleAutomatonPlugin.groundSpikesParent.transform.GetChild(0)!;
                         firstSet.GetChild(0).gameObject.SetActive(false);
                         firstSet.GetChild(2).gameObject.SetActive(false);
@@ -296,7 +301,7 @@ public static class Helpers
                         clonedTerrainArt.transform.Find("Infinite Terrain Mover Right").gameObject.SetActive(false);
                         clonedTerrainArt.transform.Find("Infinite Terrain Mover Left").gameObject.SetActive(true);
                         mainTerrainArt.transform.Find("Infinite Terrain Mover Right").gameObject.SetActive(true);
-                        mainTerrainArt.transform.Find("Infinite Terrain Mover Left").gameObject.SetActive(false);
+                        mainTerrainArt.transform.Find("Infinite Terrain Mover Left").gameObject.SetActive(true);
                         mainTerrainArt.name = "Main Terrain Art";
                         clonedTerrainArt.name = "Cloned Terrain Art";
                         break;
@@ -325,8 +330,12 @@ public static class Helpers
                 }
                 continue;
             }
-            //todo: mirror some bg objects so it doesnt look scuffed asf
             if (gameObject.transform.position.z < 25 || arenaBlacklist.Contains(gameObject.name)) gameObject.SetActive(false);
+            else
+            {
+                //todo: mirror some bg objects so it doesnt look scuffed asf
+                
+            }
             PaleAutomatonPlugin.terrainCollider.SetActive(true);
             fallKiller.SetActive(true);
         }
