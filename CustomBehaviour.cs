@@ -314,6 +314,20 @@ public static class CustomBehaviour
                 PaleAutomatonPlugin.PHASE_4 = true;
                 yield return Phase4Transition();
             }
+            if (PaleAutomatonPlugin.PHASE_4)
+            {
+                Helpers.fallKiller.transform.position = Helpers.fallKiller.transform.position with { x = HeroController.instance.transform.position.x - 250 };
+                var claBounds = InfiniteTerrainMover.cameraLockArea.box2d.bounds;
+                claBounds.min = claBounds.min with { x = HeroController.instance.transform.position.x - 500 };
+                claBounds.max = claBounds.max with { x = HeroController.instance.transform.position.x + 500 };
+                InfiniteTerrainMover.cameraLockArea.cameraXMin = HeroController.instance.transform.position.x - 500;
+                InfiniteTerrainMover.cameraLockArea.cameraXMax = HeroController.instance.transform.position.x + 500;
+                InfiniteTerrainMover.cameraLockArea.cameraYMax = HeroController.instance.transform.position.y + 100000;
+                InfiniteTerrainMover.cameraLockArea.enabled = false;
+                Helpers.cameraLockArea.transform.position = Helpers.cameraLockArea.transform.position with { x = HeroController.instance.transform.position.x };
+                InfiniteTerrainMover.cameraLockArea.enabled = true;
+                InfiniteTerrainMover.cameraLockArea.OnInsideStateChanged(true);
+            }
             if (PaleAutomatonPlugin.controlFsm.GetFsmBoolIfExists("Hornet Dead"))
             {
                 yield return Teleport(HeroController.instance.transform.position.x, HeroController.instance.transform.position.y + 100, "First Idle");

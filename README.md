@@ -5,6 +5,7 @@ A Hollow Knight: Silksong mod.
 # TODO:
 > arena todos
 - mirror some bg decals so it doesnt look scuffed asf
+- add spikes appearing animation or something
 > gameplay bugs
 - the boss disappears during zoomed out gameplay if he goes too far
 > gameplay todos

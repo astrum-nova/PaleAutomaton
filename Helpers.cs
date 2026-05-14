@@ -190,7 +190,7 @@ public static class Helpers
         fallKiller = Object.Instantiate(GameObject.Find("Spike Collider"))!;
         SetupGroundSpikeHitbox(fallKiller);
         fallKiller.name = "FallKiller";
-        fallKiller.transform.position = fallKiller.transform.position with {y = -6};
+        fallKiller.transform.position = fallKiller.transform.position with { y = -2 };
         fallKiller.GetComponent<DamageHero>().SetDamageAmount(999);
         fallKiller.transform.localScale = fallKiller.transform.localScale with {y = 500};
         fallKiller.transform.localScale = fallKiller.transform.localScale with {x = 100};
@@ -205,6 +205,7 @@ public static class Helpers
                     case "CameraLockArea (1)":
                         gameObject.transform.position = gameObject.transform.position with { x = 150.7405f };
                         gameObject.transform.localScale = gameObject.transform.localScale with { x = gameObject.transform.localScale.x * 5 };
+                        gameObject.transform.localScale = gameObject.transform.localScale with { y = gameObject.transform.localScale.y * 5 };
                         cameraLockArea = gameObject;
                         InfiniteTerrainMover.cameraLockArea = gameObject.GetComponent<CameraLockArea>();
                         break;
@@ -212,10 +213,10 @@ public static class Helpers
                         gameObject.transform.position = gameObject.transform.position with { y = -1000 };
                         break;
                     case "wind_tiled_set":
-                        gameObject.transform.Find("plane").localScale *= 100;
-                        gameObject.transform.Find("plane (1)").localScale *= 100;
-                        gameObject.transform.Find("plane (2)").localScale *= 100;
-                        gameObject.transform.Find("plane (3)").localScale *= 100;
+                        gameObject.transform.Find("plane").localScale *= 200;
+                        gameObject.transform.Find("plane (1)").localScale *= 200;
+                        gameObject.transform.Find("plane (2)").localScale *= 200;
+                        gameObject.transform.Find("plane (3)").localScale *= 200;
                         break;
                     case "strut_bg_song_bridge_example":
                         foreach (var objName in (string[])[
@@ -279,7 +280,6 @@ public static class Helpers
                         infiniteTerrainMoverRight.transform.localScale = new Vector3(1, 100000, 1);
                         infiniteTerrainMoverRight.transform.position = infiniteTerrainMoverRight.transform.position with { x = 185 };
                         infiniteTerrainMoverRight.transform.SetParent(gameObject.transform);
-                        
                         var itmLeft = infiniteTerrainMoverLeft.AddComponent<InfiniteTerrainMover>();
                         var itmRight = infiniteTerrainMoverRight.AddComponent<InfiniteTerrainMover>();
                         itmLeft.other = infiniteTerrainMoverRight;

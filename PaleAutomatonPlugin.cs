@@ -57,6 +57,9 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         SceneManager.sceneLoaded += (scene, _) =>
         {
             bossScene = false;
+            songKnight = null!;
+            controlFsm = null!;
+            healthManager = null!;
             GameCameras.instance.tk2dCam.ZoomFactor = 1;
             Helpers.ToggleDownSlashHitbox(false);
             if (!GameManager.instance.IsGameplayScene()) return;
