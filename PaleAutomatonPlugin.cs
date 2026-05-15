@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Linq;
 using BepInEx;
@@ -47,8 +48,9 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     
     private void Awake()
     {
-        Instance = this;
         Logger.LogInfo($"Plugin {Name} ({Id}) has loaded!");
+        Instance = this;
+        Settings.InitializeSettings(Config);
         Harmony.CreateAndPatchAll(typeof(Patches));
         SK_ASSET = ManagedAsset<GameObject>.FromSceneAsset("hang_17b", "Boss Scene - To Additive Load");
         BIG_TITLE = ManagedAsset<GameObject>.FromSceneAsset("cradle_03", "Boss Scene/Boss Title");
@@ -121,7 +123,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Helpers.originalDownSlash = HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlash").gameObject.GetComponent<PolygonCollider2D>().points;
         Helpers.originalDownSlashAlt = HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlashAlt").gameObject.GetComponent<PolygonCollider2D>().points;
     }
-    private static IEnumerator FancyZoomOut(float duration, float targetZoom)
+
+    public static IEnumerator FancyZoomOut(float duration, float targetZoom)
     {
         var elapsed = 0f;
         var startZoom = GameCameras.instance.tk2dCam.ZoomFactor;
@@ -224,7 +227,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             PHASE_3 = true;
             Instance.StartCoroutine(CustomBehaviour.Phase3Transition());
             SetupPhase3();
-            Instance.StartCoroutine(FancyZoomOut(2, 0.575f));
             var hitbox = songKnight.transform.Find("Dive Hit").gameObject;
             hitbox.GetComponent<PolygonCollider2D>().SetPath(0, songKnight.transform.Find("ComboSlash 1").gameObject.GetComponent<PolygonCollider2D>().points);
             hitbox.transform.localScale = new Vector3(1, 2, 1);

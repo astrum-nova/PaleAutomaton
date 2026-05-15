@@ -158,24 +158,63 @@ public static class CustomBehaviour
             everyFrame = false
         });
     }
+    public static IEnumerator GroundSpikeAntic(GameObject silkSwish, float delay, bool flip = false)
+    {
+        silkSwish.SetActive(false);
+        yield return new WaitForSeconds(delay);
+        Object.Destroy(silkSwish.transform.GetChild(2).gameObject);
+        silkSwish.transform.position = silkSwish.transform.position with { x = silkSwish.transform.position.x + Random.Range(-6, 6) };
+        if (flip) silkSwish.transform.FlipLocalScale(x:true);
+        silkSwish.SetActive(true);
+    }
     public static IEnumerator Phase3Transition()
     {
         Helpers.DisableChargingEffects();
-        yield return Teleport(100, 100, "First Idle");
+        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(100, HeroController.instance.transform.position.y + 100, "First Idle"));
         PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
-        yield return new WaitForSeconds(1);
+        InfiniteTerrainMover.cameraLockArea.cameraYMax = 15;
+        InfiniteTerrainMover.cameraLockArea.enabled = false;
+        InfiniteTerrainMover.cameraLockArea.enabled = true;
+        InfiniteTerrainMover.cameraLockArea.OnInsideStateChanged(true);
+        yield return new WaitForSeconds(0.6f);
+        var silkSwishOriginal = GameObject.Find("Boss Title(Clone)").transform.GetChild(0).gameObject;
+        silkSwishOriginal.SetActive(false);
+        foreach (var spriteRenderer in silkSwishOriginal.GetComponentsInChildren<SpriteRenderer>()) spriteRenderer.sortingOrder = 500;
+        silkSwishOriginal.transform.position = new Vector3(1.2f, -5, 1);
+        silkSwishOriginal.transform.localScale = new Vector3(1.2f, 0.6114f, 0.8734f);
+        PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0));yield return null;
+        PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.5f, true));yield return null;
+        PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.2f));yield return null;
+        PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.25f, true));yield return null;
+        PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.4f));yield return null;
+        PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.45f, true));yield return null;
+        PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.6f));yield return null;
+        PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.65f, true));yield return null;
+        PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.8f));yield return null;
+        PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.85f, true));yield return null;
+        yield return Teleport(100, HeroController.instance.transform.position.y + 100, "First Idle");
+        yield return new WaitForSeconds(0.6f);
+        silkSwishOriginal.transform.position = new Vector3(-2f, -4, 1);
+        silkSwishOriginal.transform.localScale = new Vector3(5.1726f, 0.6114f, 0.8734f);
+        silkSwishOriginal.SetActive(true);
+        yield return new WaitForSeconds(0.4f);
         Object.Destroy(PaleAutomatonPlugin.songKnight.transform.Find("WindSlash Hit").gameObject);
-        Helpers.clonedGroundSpikes.SetActive(true);
-        Helpers.clonedGroundSpikesCollider.SetActive(true);
         PaleAutomatonPlugin.groundSpikesParent.SetActive(true);
+        Helpers.clonedGroundSpikes.SetActive(true);
         groundSpikesCollider.SetActive(true);
+        Helpers.clonedGroundSpikesCollider.SetActive(true);
+        PaleAutomatonPlugin.Instance.StartCoroutine(PaleAutomatonPlugin.FancyZoomOut(2, 0.575f));
         yield return new WaitForSeconds(0.5f);
         PaleAutomatonPlugin.terrainCollider.transform.position = PaleAutomatonPlugin.terrainCollider.transform.position with {y = -50};
         var otherTerrainCollider = Helpers.clonedTerrainArt.transform.Find("Terrain Collider");
         otherTerrainCollider.transform.position = otherTerrainCollider.transform.position with { y = -50 };
         yield return new WaitForSeconds(0.5f);
-        Helpers.ToggleDownSlashHitbox(true);
         PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
+        InfiniteTerrainMover.cameraLockArea.cameraYMax = 100000;
+        InfiniteTerrainMover.cameraLockArea.enabled = false;
+        InfiniteTerrainMover.cameraLockArea.enabled = true;
+        InfiniteTerrainMover.cameraLockArea.OnInsideStateChanged(true);
+        Helpers.ToggleDownSlashHitbox(true);
         PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
     }
     public static IEnumerator Phase4Transition()
