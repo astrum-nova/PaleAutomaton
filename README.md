@@ -3,11 +3,8 @@
 A Hollow Knight: Silksong mod.
 
 # TODO:
-> arena todos
-- mirror some bg decals so it doesnt look scuffed asf
 > gameplay bugs
 - the boss disappears during zoomed out gameplay if he goes too far
-- when teleporting the boss to hornet during phase 2 the coroutines still go on
+- fix bell bind effect sticking to the player not the boss if binding as the boss gets his bell bind effect
 > gameplay todos
-- fix dash hitbox in phase 3 maybe clamp the max way higher
-- add the bell bind effect to him in phase 3
+- fix dash hitbox in phase 3 maybe clamp the max way higher or tp if too close on x+y

@@ -225,6 +225,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         if (healthManager.hp <= PHASE_3_THRESHOLD && !PHASE_3 && CustomBehaviour.crossSlashSetup)
         {
             PHASE_3 = true;
+            Helpers.constrainPosition.enabled = false;
             Instance.StartCoroutine(CustomBehaviour.Phase3Transition());
             SetupPhase3();
             var hitbox = songKnight.transform.Find("Dive Hit").gameObject;
@@ -253,14 +254,12 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         });
         foreach (var stateName in new[] {"Set DiveSlash", "Set Dash Attack", "Set Wind Slash", "Set CrossSlash", "Set Rising Slash"}) controlFsm.GetState(stateName)!.AddMethod(() =>
         {
-            if (PhaseCheck()) return;
-            /*
-            var dist = Math.Abs(songKnight.transform.position.x - HeroController.instance.transform.position.x);
-            Instance.StartCoroutine(CustomBehaviour.Teleport(
-                songKnight.transform.position.x + (songKnight.transform.position.x < HeroController.instance.transform.position.x ? dist : -dist) * 2,
-                songKnight.transform.position.y,
-                "Do Move"));
-            */
+            if (!PHASE_3 && Math.Abs(songKnight.transform.position.x - HeroController.instance.transform.position.x) > 60)
+            {
+                Helpers.constrainPosition.SetYMax(HeroController.instance.transform.position.y + 100);
+                Instance.StartCoroutine(CustomBehaviour.Teleport(HeroController.instance.transform.position.x + (Random.value > 0.5f ? 10 : -10), 12.9413f, "First Idle"));
+            };
+            if (!PhaseCheck()) return;
         });
         controlFsm.GetState("DashStab Dash")!.InsertMethod(() =>
         {

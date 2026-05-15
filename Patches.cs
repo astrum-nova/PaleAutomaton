@@ -1,4 +1,5 @@
 ﻿using System;
+using GenericVariableExtension;
 using GlobalEnums;
 using HarmonyLib;
 using HutongGames.PlayMaker.Actions;
@@ -32,6 +33,7 @@ public static class Patches
         if (!__instance.storeObject.Value) return;
         var go = __instance.storeObject.Value;
         if (go == null) return;
+        Debug.Log(go.name);
         var spawned = go.transform;
         if (spawned.name.StartsWith("Song Knight CrossSlash"))
         {
@@ -51,8 +53,20 @@ public static class Patches
         {
             PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.SpawnWindSlash());
             Object.Destroy(go);
+        } else if (go.name.StartsWith("bind_bell_appear"))
+        {
+            if (PaleAutomatonPlugin.PHASE_3 && !tookBellBind)
+            {
+                tookBellBind = true;
+                var songKnightBellBind = Object.Instantiate(go, PaleAutomatonPlugin.songKnight.transform, true);
+                Object.Destroy(go);
+                songKnightBellBind.GetComponent<FollowTransform>().enabled = false;
+                songKnightBellBind.transform.localScale = new Vector3(1.7f, 1.7f, 1);
+                songKnightBellBind.transform.localPosition = Vector3.zero;
+            }
         }
     }
+    public static bool tookBellBind = false;
     [HarmonyPrefix]
     [HarmonyPatch(typeof(GameManager), nameof(GameManager.FreezeMoment), typeof(FreezeMomentTypes), typeof(Action))]
     private static bool GameManager_FreezeMoment(GameManager __instance, FreezeMomentTypes type, Action onFinish)

@@ -170,8 +170,13 @@ public static class Helpers
     public static GameObject clonedGroundSpikesCollider = null!;
     public static GameObject fallKiller = null!;
     public static GameObject cameraLockArea = null!;
+    public static ConstrainPosition constrainPosition = null!;
     public static void SetupArena()
     {
+        constrainPosition = PaleAutomatonPlugin.songKnight.AddComponent<ConstrainPosition>();
+        constrainPosition.constrainY = true;
+        constrainPosition.SetYMax(HeroController.instance.transform.position.y + 100);
+        constrainPosition.SetYMin(11);
         // Camera
         GameCameras.instance.cameraController.SetAllowExitingSceneBounds(true);
         var sceneBorderRemover = new GameObject("Scene Border Remover");
@@ -181,8 +186,8 @@ public static class Helpers
         sceneBorderRemover.AddComponent<SceneBorderRemover>();
         sceneBorderRemover.transform.position = new Vector3(0, 0, 0.1f);
         // Hitboxes
-        PaleAutomatonPlugin.terrainCollider.transform.localScale = PaleAutomatonPlugin.terrainCollider.transform.localScale with { x = 1.1f };
-        PaleAutomatonPlugin.terrainCollider.transform.position = PaleAutomatonPlugin.terrainCollider.transform.position with { x = 33.0313f };
+        PaleAutomatonPlugin.terrainCollider.transform.localScale = PaleAutomatonPlugin.terrainCollider.transform.localScale with { x = 3f };
+        PaleAutomatonPlugin.terrainCollider.transform.position = PaleAutomatonPlugin.terrainCollider.transform.position with { x = -100 };
         
         CustomBehaviour.groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
         CustomBehaviour.groundSpikesCollider.name = "GroundSpikesCollider";
@@ -310,7 +315,7 @@ public static class Helpers
                         gameObject.transform.position = gameObject.transform.position with { y = gameObject.transform.position.y - 10 };
                         break;
                     case "Black Thread States":
-                        var targetChild = gameObject.transform.GetChild(0)!;
+                        var normalWorld = gameObject.transform.GetChild(0)!;
                         foreach (var objName in (string[])[
                                      "hanging_garden__0013_fence_mid (9)",
                                      "song_city_pipes_0016_1 (16)",
@@ -325,17 +330,57 @@ public static class Helpers
                                      "hanging_garden__0013_fence_mid (17)",
                                      "break_lamp_slab_bridge",
                                      "arborium_tunnel_simple",
-                                 ]) targetChild.Find(objName).gameObject.SetActive(false);
+                                 ]) normalWorld.Find(objName).gameObject.SetActive(false);
+                        var blackThreadWorld = gameObject.transform.GetChild(1);
+                        blackThreadWorld.gameObject.SetActive(true);
+                        blackThreadWorld.transform.position = new Vector3(19.9373f, 21.1073f, 0);
+                        blackThreadWorld.localScale = blackThreadWorld.localScale with { x = -1 };
+                        foreach (var objIndex in (int[])[
+                                     16,
+                                     18,
+                                     19,
+                                     24
+                                 ]) blackThreadWorld.GetChild(0).GetChild(objIndex).gameObject.SetActive(false);
+                        foreach (var objIndex in (int[])[
+                                     2,
+                                     3,
+                                     4,
+                                     5,
+                                     7,
+                                     8,
+                                     9,
+                                     10,
+                                     13,
+                                     22,
+                                     23,
+                                     24,
+                                     25,
+                                     26,
+                                     28,
+                                     29,
+                                     30,
+                                     31,
+                                     32,
+                                     33,
+                                     34,
+                                     35,
+                                     36,
+                                     37,
+                                     38,
+                                     39,
+                                     40,
+                                 ]) blackThreadWorld.GetChild(objIndex).gameObject.SetActive(false);
+                        break;
+                    case "GameObject (11)":
+                        for (var i = 0; i < gameObject.transform.childCount; i++)
+                        {
+                            if (gameObject.transform.GetChild(i).gameObject.name.StartsWith("deepnest_stalactites_bg_simple_wall") || gameObject.transform.GetChild(i).gameObject.name == "sc_outer_bg_towers_0010_1_bg_outer_wall (2)") gameObject.transform.GetChild(i).gameObject.SetActive(false);
+                        }
                         break;
                 }
                 continue;
             }
             if (gameObject.transform.position.z < 25 || arenaBlacklist.Contains(gameObject.name)) gameObject.SetActive(false);
-            else
-            {
-                //todo: mirror some bg objects so it doesnt look scuffed asf
-                
-            }
             PaleAutomatonPlugin.terrainCollider.SetActive(true);
             fallKiller.SetActive(true);
         }

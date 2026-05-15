@@ -215,6 +215,8 @@ public static class CustomBehaviour
         InfiniteTerrainMover.cameraLockArea.enabled = true;
         InfiniteTerrainMover.cameraLockArea.OnInsideStateChanged(true);
         Helpers.ToggleDownSlashHitbox(true);
+        var bBind = HeroController.instance.transform.Find("Tool Effects").Find("Bell Bind").gameObject;
+        if (!bBind.activeSelf) bBind.SetActive(true);
         PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
     }
     public static IEnumerator Phase4Transition()

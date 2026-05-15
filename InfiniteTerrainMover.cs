@@ -41,6 +41,5 @@ public class InfiniteTerrainMover : MonoBehaviour
         }
         cameraLockArea.enabled = true;
         cameraLockArea.OnInsideStateChanged(true);
-        if (!PaleAutomatonPlugin.PHASE_3 && Math.Abs(PaleAutomatonPlugin.songKnight.transform.position.x - HeroController.instance.transform.position.x) > 60) PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.Teleport(HeroController.instance.transform.position.x + (Random.value > 0.5f ? 10 : -10), 12.9413f, "First Idle"));
     }
 }
