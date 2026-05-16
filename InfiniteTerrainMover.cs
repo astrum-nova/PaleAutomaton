@@ -23,6 +23,7 @@ public class InfiniteTerrainMover : MonoBehaviour
         cameraLockArea.cameraXMin = HeroController.instance.transform.position.x - 500;
         cameraLockArea.cameraXMax = HeroController.instance.transform.position.x + 500;
         cameraLockArea.cameraYMax = HeroController.instance.transform.position.y + 100000;
+        Helpers.UpdateSaveHeroClamps();
         cameraLockArea.enabled = false;
         Helpers.cameraLockArea.transform.position = Helpers.cameraLockArea.transform.position with { x = HeroController.instance.transform.position.x };
         var availableTerrain = (other.transform.parent.gameObject.name == "Main Terrain Art" ? Helpers.clonedTerrainArt : Helpers.mainTerrainArt).transform;

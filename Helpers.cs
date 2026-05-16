@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Architect.Behaviour.Utility;
 using GlobalEnums;
+using HutongGames.PlayMaker.Actions;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
@@ -145,6 +146,14 @@ public static class Helpers
     {
         PaleAutomatonPlugin.songKnight.transform.GetChild(17).gameObject.SetActive(false);
         PaleAutomatonPlugin.songKnight.transform.GetChild(18).gameObject.SetActive(false);
+    }
+    public static void UpdateSaveHeroClamps()
+    {
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<FloatClamp>("Dash Slash 3")!.minValue = HeroController.instance.transform.position.x - 1000;
+        PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<FloatClamp>("Dash Slash 3")!.maxValue =HeroController.instance.transform.position.x + 1000;
+        var saveHeroFsm = PaleAutomatonPlugin.songKnight.LocateMyFSM("Save Hero");
+        saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.minValue = HeroController.instance.transform.position.x - 1000;
+        saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.maxValue =HeroController.instance.transform.position.x + 1000;
     }
     private static readonly HashSet<string> arenaWhitelist = [
         "Black Thread States",

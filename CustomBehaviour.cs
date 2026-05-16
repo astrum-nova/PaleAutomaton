@@ -21,6 +21,7 @@ public static class CustomBehaviour
     public static GameObject crossSlashSetup = null!;
     public static GameObject crossSlashAnticSetup = null!;
     public static GameObject groundSpikesCollider = null!;
+    public static GameObject bellBindEffect = null!;
     public static Rigidbody2D rb = null!;
     public static bool csSpam;
     public static bool inPhase4Transition;
@@ -215,8 +216,7 @@ public static class CustomBehaviour
         InfiniteTerrainMover.cameraLockArea.enabled = true;
         InfiniteTerrainMover.cameraLockArea.OnInsideStateChanged(true);
         Helpers.ToggleDownSlashHitbox(true);
-        var bBind = HeroController.instance.transform.Find("Tool Effects").Find("Bell Bind").gameObject;
-        if (!bBind.activeSelf) bBind.SetActive(true);
+        bellBindEffect.SetActive(true);
         PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
     }
     public static IEnumerator Phase4Transition()
@@ -364,6 +364,7 @@ public static class CustomBehaviour
                 InfiniteTerrainMover.cameraLockArea.cameraXMin = HeroController.instance.transform.position.x - 500;
                 InfiniteTerrainMover.cameraLockArea.cameraXMax = HeroController.instance.transform.position.x + 500;
                 InfiniteTerrainMover.cameraLockArea.cameraYMax = HeroController.instance.transform.position.y + 100000;
+                Helpers.UpdateSaveHeroClamps();
                 InfiniteTerrainMover.cameraLockArea.enabled = false;
                 Helpers.cameraLockArea.transform.position = Helpers.cameraLockArea.transform.position with { x = HeroController.instance.transform.position.x };
                 InfiniteTerrainMover.cameraLockArea.enabled = true;

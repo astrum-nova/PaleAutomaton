@@ -62,6 +62,11 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             songKnight = null!;
             controlFsm = null!;
             healthManager = null!;
+            windslashGround = false;
+            customComboSequence = false;
+            dashToWindslashFollowup = false;
+            rapidSlashFollowupAllowed = false;
+            Patches.tookBellBind = false;
             GameCameras.instance.tk2dCam.ZoomFactor = 1;
             Helpers.ToggleDownSlashHitbox(false);
             if (!GameManager.instance.IsGameplayScene()) return;
@@ -101,6 +106,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         yield return new WaitForSeconds(0.3475f);
         HeroController.instance.transform.position = new Vector3(46.8476f, 25.5938f, 0.004f);
         HeroController.instance.vignette.enabled = false;
+        HeroController.instance.transform.Find("Tool Effects").Find("Bell Bind").gameObject.SetActive(true);
         yield return GROUND_SPIKES.Load();
         groundSpikesSetup = GROUND_SPIKES.InstantiateAsset();
         groundSpikesSetup.transform.position = new Vector3(1000, 1000, 0);
@@ -123,7 +129,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Helpers.originalDownSlash = HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlash").gameObject.GetComponent<PolygonCollider2D>().points;
         Helpers.originalDownSlashAlt = HeroController.instance.transform.Find("Attacks").Find("Wanderer").Find("DownSlashAlt").gameObject.GetComponent<PolygonCollider2D>().points;
     }
-
     public static IEnumerator FancyZoomOut(float duration, float targetZoom)
     {
         var elapsed = 0f;
@@ -176,14 +181,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         healthManager.SetImmuneToTraps(true);
         Destroy(songKnight.LocateMyFSM("Stun Control"));
         controlFsm = songKnight.LocateMyFSM("Control");
-        //? These clamp hornets position on connect, these are intended for the original arena so we need to expand them
-        //TODO: Fine tune them to the arena borders if you end up making arena borders
-        controlFsm.GetFirstActionOfType<FloatClamp>("Dash Slash 3")!.minValue = -1000;
-        controlFsm.GetFirstActionOfType<FloatClamp>("Dash Slash 3")!.maxValue = 1000;
-        var saveHeroFsm = songKnight.LocateMyFSM("Save Hero");
-        saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.minValue = -1000;
-        saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.maxValue = 1000;
-        //? The rising slash animates hornets position to a point, but for some reason the point is always on the right, this fixes it
+        Helpers.UpdateSaveHeroClamps();
         var mainFsm = songKnight.LocateMyFSM("FSM");
         mainFsm.GetState("Catch")!.InsertLambdaMethod(_ => { if (HeroController.instance.transform.position.x < songKnight.transform.position.x) mainFsm.GetFirstActionOfType<AnimatePositionTo>("Catch")!.toValue.value.x *= -1; }, 3);
         damageHero = songKnight.GetComponent<DamageHero>();
