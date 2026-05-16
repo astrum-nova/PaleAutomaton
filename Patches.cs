@@ -33,7 +33,6 @@ public static class Patches
         if (!__instance.storeObject.Value) return;
         var go = __instance.storeObject.Value;
         if (go == null) return;
-        Debug.Log(go.name);
         var spawned = go.transform;
         if (spawned.name.StartsWith("Song Knight CrossSlash"))
         {
@@ -42,7 +41,6 @@ public static class Patches
             spawned.name = "CrossSlashSetup";
             if (!CustomBehaviour.crossSlashSetup)
             {
-                //todo: replace __instance with the asset like projectile
                 CustomBehaviour.crossSlashSetup = Object.Instantiate(go);
                 CustomBehaviour.crossSlashSetup.SetActive(false);
                 CustomBehaviour.crossSlashSetup.name = "CrossSlashSetup";

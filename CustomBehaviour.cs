@@ -8,6 +8,7 @@ using HutongGames.PlayMaker.Actions;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
@@ -85,6 +86,66 @@ public static class CustomBehaviour
         crossSlash.SetActive(false);
     }
     //! MISC
+    public static IEnumerator GroundSpikeAntic(GameObject silkSwish, float delay, bool flip = false)
+    {
+        silkSwish.SetActive(false);
+        yield return new WaitForSeconds(delay);
+        Object.Destroy(silkSwish.transform.GetChild(2).gameObject);
+        silkSwish.transform.position = silkSwish.transform.position with { x = silkSwish.transform.position.x + Random.Range(-6, 6) };
+        if (flip) silkSwish.transform.FlipLocalScale(x:true);
+        silkSwish.SetActive(true);
+    }
+    public static IEnumerator LieDown()
+    {
+        var keepHornetInPlace = HeroController.instance.gameObject.AddComponent<KeepHornetInPlace>();
+        var heroController = HeroController.instance;
+        var heroAnim = heroController.GetComponent<HeroAnimationController>();
+        heroAnim.PlayClipForced("Prostrate");
+        yield return new WaitForSeconds(1);
+        var clipLength1 = heroAnim.GetClipDuration("Wake Up Ground");
+        heroAnim.PlayClipForced("Wake Up Ground");
+        var clip1 = heroAnim.animator.CurrentClip;
+        while (heroAnim.animator.IsPlaying(clip1) && clipLength1 > 0f)
+        {
+            yield return null;
+            clipLength1 -= Time.deltaTime;
+        }
+        keepHornetInPlace.enabled = false;
+    }
+    public static IEnumerator DeathSequence()
+    {
+        yield return new WaitForSeconds(0.7f);
+        PaleAutomatonPlugin.songKnight = null!;
+        GameManager.instance.BeginSceneTransition(new GameManager.SceneLoadInfo
+        {
+            IsFirstLevelForPlayer = false,
+            SceneName = "Hang_17b",
+            SceneResourceLocation = null,
+            AsyncPriority = 0,
+            HeroLeaveDirection = null,
+            EntryGateName = null,
+            EntryDelay = 0,
+            EntrySkip = false,
+            PreventCameraFadeOut = false,
+            WaitForSceneTransitionCameraFade = false,
+            Visualization = GameManager.SceneLoadVisualizations.Default,
+            AlwaysUnloadUnusedAssets = false,
+            ForceWaitFetch = false,
+            TransitionID = 0
+        });
+        yield return new WaitForSeconds(0.4f);
+        PaleAutomatonPlugin.songKnight.transform.position = PaleAutomatonPlugin.songKnight.transform.position with { x = 500 };
+        var corpse = PaleAutomatonPlugin.songKnight.transform.Find("Corpse Song Knight(Clone)").gameObject;
+        corpse.SetActive(true);
+        var corpseFsm = corpse.GetComponent<PlayMakerFSM>();
+        corpseFsm.SetState("Land");
+        corpseFsm.GetState("Leave Antic")!.AddMethod(() =>
+        {
+            PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect(corpse:true));
+            corpse.transform.position = corpse.transform.position with { x = 500 };
+        });
+        corpse.transform.position = new Vector3(50.0426f, 27.0411f, 0.0097f);
+    }
     public static IEnumerator AnticParry()
     {
         var currentState = PaleAutomatonPlugin.controlFsm.ActiveStateName;
@@ -158,15 +219,6 @@ public static class CustomBehaviour
             ySpeed = 0,
             everyFrame = false
         });
-    }
-    public static IEnumerator GroundSpikeAntic(GameObject silkSwish, float delay, bool flip = false)
-    {
-        silkSwish.SetActive(false);
-        yield return new WaitForSeconds(delay);
-        Object.Destroy(silkSwish.transform.GetChild(2).gameObject);
-        silkSwish.transform.position = silkSwish.transform.position with { x = silkSwish.transform.position.x + Random.Range(-6, 6) };
-        if (flip) silkSwish.transform.FlipLocalScale(x:true);
-        silkSwish.SetActive(true);
     }
     public static IEnumerator Phase3Transition()
     {

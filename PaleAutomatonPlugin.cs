@@ -2,9 +2,11 @@ using System;
 using System.Collections;
 using System.Linq;
 using BepInEx;
+using GlobalEnums;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using InControl;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
@@ -33,18 +35,19 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static DamageHero damageHero = null!;
     
     //* Flags
-    public const int INITIAL_HP = 1800;
-    public const int PHASE_2_THRESHOLD = 1790;
+    public const int INITIAL_HP = 40;
+    public const int PHASE_2_THRESHOLD = 30;
     public static bool PHASE_2;
-    public const int PHASE_3_THRESHOLD = 1780;
+    public const int PHASE_3_THRESHOLD = 20;
     public static bool PHASE_3;
-    public const int PHASE_4_THRESHOLD = 1770;
+    public const int PHASE_4_THRESHOLD = 10;
     public static bool PHASE_4;
     public static bool bossScene;
     public static bool windslashGround;
     public static bool customComboSequence;
     public static bool dashToWindslashFollowup;
     public static bool rapidSlashFollowupAllowed;
+    public static bool dead;
     
     private void Awake()
     {
@@ -104,7 +107,13 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     private static IEnumerator PlaceHornet()
     {
         yield return new WaitForSeconds(0.3475f);
-        HeroController.instance.transform.position = new Vector3(46.8476f, 25.5938f, 0.004f);
+        HeroController.instance.transform.position = new Vector3(dead ? 44 : 46.8476f, 25.5938f, 0.004f);
+        if (dead)
+        {
+            Instance.StartCoroutine(CustomBehaviour.LieDown());
+            foreach (var tk2dsprite in songKnight.GetComponentsInChildren<tk2dSprite>(true)) tk2dsprite.renderLayer = 0;
+        }
+        dead = false;
         HeroController.instance.vignette.enabled = false;
         HeroController.instance.transform.Find("Tool Effects").Find("Bell Bind").gameObject.SetActive(true);
         yield return GROUND_SPIKES.Load();
@@ -209,6 +218,13 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Slash").gameObject);
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Strike L").gameObject);
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Strike R").gameObject);
+        healthManager.OnDeath += () =>
+        {
+            dead = true;
+            Instance.StopAllCoroutines();
+            GameManager.instance.FreezeMoment(FreezeMomentTypes.RaceWinSlow);
+            Instance.StartCoroutine(CustomBehaviour.DeathSequence());
+        };
         SetupPaleAutomaton();
     }
     private static bool PhaseCheck()

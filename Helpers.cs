@@ -81,10 +81,10 @@ public static class Helpers
         groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { y = 180 };
         groundSpikesCollider.transform.localScale = groundSpikesCollider.transform.localScale with { x = 16.4f };
     }
-    public static IEnumerator TpEffect()
+    public static IEnumerator TpEffect(bool corpse = false)
     {
         var tpEffect = Pools.GetTpEffect();
-        tpEffect.transform.position = PaleAutomatonPlugin.songKnight.transform.position;
+        tpEffect.transform.position = !corpse ? PaleAutomatonPlugin.songKnight.transform.position : PaleAutomatonPlugin.songKnight.transform.Find("Corpse Song Knight(Clone)").transform.position;
         tpEffect.SetActive(true);
         PaleAutomatonPlugin.healthManager.SpriteFlash.flashArmoured();
         yield return new WaitForSeconds(1);
