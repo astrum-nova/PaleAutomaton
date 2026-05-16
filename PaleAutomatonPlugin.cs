@@ -10,6 +10,7 @@ using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Bounds = UnityEngine.Bounds;
 using Random = UnityEngine.Random;
 
 namespace PaleAutomaton;
@@ -231,7 +232,9 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             GameManager.instance.FreezeMoment(FreezeMomentTypes.RaceWinSlow);
             Instance.StartCoroutine(CustomBehaviour.DeathSequence());
         };
-        GameCameras.instance.mainCamera.rect = new Rect(-25, -25, 50, 50);
+        var meshRenderer = songKnight.GetComponent<MeshRenderer>();
+        meshRenderer.forceRenderingOff = false; 
+        meshRenderer.bounds = new Bounds(Vector3.zero, new Vector3(1000f, 1000f, 1000f));
         SetupPaleAutomaton();
     }
     private static bool PhaseCheck()
