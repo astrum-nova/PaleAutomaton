@@ -5,7 +5,6 @@ using System.Linq;
 using Architect.Behaviour.Utility;
 using GlobalEnums;
 using HutongGames.PlayMaker.Actions;
-using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -62,7 +61,7 @@ public static class Helpers
         yield return new WaitForSeconds(delay);
         PaleAutomatonPlugin.controlFsm.SetState(state);
     }
-    public static void SetupGroundSpikeHitbox(GameObject groundSpikesCollider)
+    private static void SetupGroundSpikeHitbox(GameObject groundSpikesCollider)
     {
         groundSpikesCollider.layer = LayerMask.NameToLayer("Enemies");
         var damageHero = groundSpikesCollider.GetComponent<DamageHero>();
@@ -116,8 +115,8 @@ public static class Helpers
         PaleAutomatonPlugin.songKnight.transform.rotation = Quaternion.Euler(0, 0, PaleAutomatonPlugin.controlFsm.ActiveStateName.Equals("Dive Antic") ? 0 : angle);
     }
     public static float GetAdaptedSpeed(float speed, float min, float max) => Mathf.Clamp(Math.Abs(HeroController.instance.transform.position.x - PaleAutomatonPlugin.songKnight.transform.position.x) * speed, min, max);
-    public static Vector2[] originalDownSlash = null!;
-    public static Vector2[] originalDownSlashAlt = null!;
+    public static Vector2[]? originalDownSlash = null!;
+    public static Vector2[]? originalDownSlashAlt = null!;
     private static readonly Vector2[] expandedDownSlash = [
         new(3.524622f, 0.000000f),
         new(3.256326f, 1.211478f),
@@ -310,6 +309,7 @@ public static class Helpers
                         PaleAutomatonPlugin.groundSpikesParent.transform.SetParent(mainTerrainArt.transform);
                         clonedTerrainArt = Object.Instantiate(mainTerrainArt);
                         clonedGroundSpikes = clonedTerrainArt.transform.Find("GroundSpikesParent").gameObject;
+                        clonedGroundSpikes.SetActive(false);
                         clonedGroundSpikesCollider = clonedTerrainArt.transform.Find("GroundSpikeColliderComponent").gameObject;
                         clonedGroundSpikesCollider.SetActive(false);
                         clonedTerrainArt.transform.position = new Vector3(-98.7366f, -34.5f, -5.1624f);

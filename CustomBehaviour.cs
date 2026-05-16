@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using GenericVariableExtension;
-using GlobalEnums;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
@@ -26,7 +23,7 @@ public static class CustomBehaviour
     public static Rigidbody2D rb = null!;
     public static bool csSpam;
     public static bool inPhase4Transition;
-    public static readonly List<int> attackMemory = [3, 4, 5];
+    private static readonly List<int> attackMemory = [3, 4, 5];
     private static string parriedState = "";
     //! SPAWN CUSTOM OBJECTS
     public static IEnumerator SpawnWindSlash()
@@ -52,7 +49,7 @@ public static class CustomBehaviour
         instance.SetActive(false);
         instance.GetComponent<PlayMakerFSM>().Reset();
     }
-    public static IEnumerator SpawnCrossSlash(float x, float y, float startDelay, float activationDelay, bool randomizePosition = false, float scaleMultiplier = 1, bool csStarter = false, bool iframes = false)
+    private static IEnumerator SpawnCrossSlash(float x, float y, float startDelay, float activationDelay, bool randomizePosition = false, float scaleMultiplier = 1, bool csStarter = false, bool iframes = false)
     {
         var xOffset = randomizePosition ? Random.Range(-2, 2) + 0.00001f : 0;
         var yOffset = randomizePosition ? Random.Range(-2, 2) + 0.00001f : 0;
@@ -86,7 +83,7 @@ public static class CustomBehaviour
         crossSlash.SetActive(false);
     }
     //! MISC
-    public static IEnumerator GroundSpikeAntic(GameObject silkSwish, float delay, bool flip = false)
+    private static IEnumerator GroundSpikeAntic(GameObject silkSwish, float delay, bool flip = false)
     {
         silkSwish.SetActive(false);
         yield return new WaitForSeconds(delay);
@@ -267,11 +264,11 @@ public static class CustomBehaviour
         InfiniteTerrainMover.cameraLockArea.enabled = false;
         InfiniteTerrainMover.cameraLockArea.enabled = true;
         InfiniteTerrainMover.cameraLockArea.OnInsideStateChanged(true);
-        Helpers.ToggleDownSlashHitbox(true);
+        if (Settings.CUSTOM_POGO_HITBOX) Helpers.ToggleDownSlashHitbox(true);
         bellBindEffect.SetActive(true);
         PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
     }
-    public static IEnumerator Phase4Transition()
+    private static IEnumerator Phase4Transition()
     {
         Helpers.DisableChargingEffects();
         inPhase4Transition = true;
@@ -394,7 +391,7 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.customComboSequence = false;
     }
     //! PHASE 3+4
-    public static IEnumerator SelectPhase3Attack()
+    private static IEnumerator SelectPhase3Attack()
     {
         if (!PaleAutomatonPlugin.bossScene) yield break;
         while (PaleAutomatonPlugin.songKnight)
@@ -446,7 +443,7 @@ public static class CustomBehaviour
         yield return new WaitForSeconds(1f);
         Pools.DisableAll();
     }
-    public static IEnumerator LiterallyBoundlessInfinity()
+    private static IEnumerator LiterallyBoundlessInfinity()
     {
         var direction = Random.value > 0.5f ? -1 : 1;
         var hcPos = HeroController.instance.transform.position;
@@ -459,7 +456,7 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
         yield return new WaitForSeconds(1.1f);
     }
-    public static IEnumerator DiveIntoCrossSlash()
+    private static IEnumerator DiveIntoCrossSlash()
     {
         //todo: make this more consistent
         var direction = Random.value > 0.5f ? -1 : 1;
@@ -491,7 +488,7 @@ public static class CustomBehaviour
         yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.2f);
         yield return new WaitForSeconds(0.2f);
     }
-    public static IEnumerator WindSlashSpam()
+    private static IEnumerator WindSlashSpam()
     {
         var direction = Random.value > 0.5f ? -1 : 1;
         var xOffset = Random.Range(10f, 13f) * direction;
@@ -521,7 +518,7 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.controlFsm.SetState("WindSlash");
         yield return new WaitForSeconds(0.2f);
     }
-    public static IEnumerator CrossSlashSpam()
+    private static IEnumerator CrossSlashSpam()
     {
         var anticTime = 0.8f;
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<Wait>("CS Antic")!.time = anticTime;
@@ -553,7 +550,7 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0, 0.3f, csStarter:true, randomizePosition:true, iframes:true));
         yield return new WaitForSeconds(0.6f);
     }
-    public static IEnumerator TripleRisingSlash()
+    private static IEnumerator TripleRisingSlash()
     {
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 40;
         var direction = Random.value > 0.5f ? -1 : 1;

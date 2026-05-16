@@ -22,12 +22,12 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
 {
     //* Boss References
     public static PaleAutomatonPlugin Instance { get; private set; } = null!;
-    public static ManagedAsset<GameObject> SK_ASSET = null!;
-    public static ManagedAsset<GameObject> BIG_TITLE = null!;
-    public static ManagedAsset<GameObject> GROUND_SPIKES = null!;
-    public static GameObject songKnightBossScene = null!;
+    private static ManagedAsset<GameObject> SK_ASSET = null!;
+    private static ManagedAsset<GameObject> BIG_TITLE = null!;
+    private static ManagedAsset<GameObject> GROUND_SPIKES = null!;
+    private static GameObject songKnightBossScene = null!;
     public static GameObject songKnight = null!;
-    public static GameObject groundSpikesSetup = null!;
+    private static GameObject groundSpikesSetup = null!;
     public static GameObject groundSpikesParent = null!;
     public static GameObject terrainCollider = null!;
     public static PlayMakerFSM controlFsm = null!;
@@ -35,19 +35,25 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static DamageHero damageHero = null!;
     
     //* Flags
-    public const int INITIAL_HP = 1800;
-    public const int PHASE_2_THRESHOLD = 1600;
+    /*
+    private const int INITIAL_HP = 1800;
+    public const int PHASE_2_THRESHOLD = 1790;
+    public const int PHASE_3_THRESHOLD = 1780;
+    public const int PHASE_4_THRESHOLD = 1770;
+    */
+    private const int INITIAL_HP = 1600;
+    public const int PHASE_2_THRESHOLD = 1400;
+    public const int PHASE_3_THRESHOLD = 800;
+    public const int PHASE_4_THRESHOLD = 400;
     public static bool PHASE_2;
-    public const int PHASE_3_THRESHOLD = 1000;
     public static bool PHASE_3;
-    public const int PHASE_4_THRESHOLD = 500;
     public static bool PHASE_4;
     public static bool bossScene;
     public static bool windslashGround;
     public static bool customComboSequence;
-    public static bool dashToWindslashFollowup;
+    private static bool dashToWindslashFollowup;
     public static bool rapidSlashFollowupAllowed;
-    public static bool dead;
+    private static bool dead;
     
     public IEnumerator Start()
     {
@@ -237,27 +243,27 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         meshRenderer.bounds = new Bounds(Vector3.zero, new Vector3(1000f, 1000f, 1000f));
         SetupPaleAutomaton();
     }
-    private static bool PhaseCheck()
+    private static void PhaseCheck()
     {
-        if (healthManager.hp <= PHASE_2_THRESHOLD && !PHASE_2)
+        switch (healthManager.hp)
         {
-            PHASE_2 = true;
-            Instance.StartCoroutine(CustomBehaviour.Phase2Transition());
-            SetupPhase2();
-            return true;
+            case <= PHASE_2_THRESHOLD when !PHASE_2:
+                PHASE_2 = true;
+                Instance.StartCoroutine(CustomBehaviour.Phase2Transition());
+                SetupPhase2();
+                return;
+            case <= PHASE_3_THRESHOLD when !PHASE_3 && CustomBehaviour.crossSlashSetup:
+            {
+                PHASE_3 = true;
+                Helpers.constrainPosition.enabled = false;
+                Instance.StartCoroutine(CustomBehaviour.Phase3Transition());
+                SetupPhase3();
+                var hitbox = songKnight.transform.Find("Dive Hit").gameObject;
+                hitbox.GetComponent<PolygonCollider2D>().SetPath(0, songKnight.transform.Find("ComboSlash 1").gameObject.GetComponent<PolygonCollider2D>().points);
+                hitbox.transform.localScale = new Vector3(1, 2, 1);
+                return;
+            }
         }
-        if (healthManager.hp <= PHASE_3_THRESHOLD && !PHASE_3 && CustomBehaviour.crossSlashSetup)
-        {
-            PHASE_3 = true;
-            Helpers.constrainPosition.enabled = false;
-            Instance.StartCoroutine(CustomBehaviour.Phase3Transition());
-            SetupPhase3();
-            var hitbox = songKnight.transform.Find("Dive Hit").gameObject;
-            hitbox.GetComponent<PolygonCollider2D>().SetPath(0, songKnight.transform.Find("ComboSlash 1").gameObject.GetComponent<PolygonCollider2D>().points);
-            hitbox.transform.localScale = new Vector3(1, 2, 1);
-            return true;
-        }
-        return false;
     }
     private static void SetupPaleAutomaton()
     {
@@ -274,7 +280,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             Instance.StartCoroutine(DisplayBigTitle());
             if (!Settings.DISABLE_CAMERA_ZOOMOUT) Instance.StartCoroutine(FancyZoomOut(2, 0.675f));
             controlFsm.GetState("Battle Start")!.RemoveActionsOfType<DisplayBossTitle>();
-            Helpers.SetupArena();
+            if (Settings.INFINITE_WALKWAY) Helpers.SetupArena();
         });
         foreach (var stateName in new[] {"Set DiveSlash", "Set Dash Attack", "Set Wind Slash", "Set CrossSlash", "Set Rising Slash"}) controlFsm.GetState(stateName)!.AddMethod(() =>
         {
@@ -282,8 +288,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             {
                 Helpers.constrainPosition.SetYMax(HeroController.instance.transform.position.y + 100);
                 Instance.StartCoroutine(CustomBehaviour.Teleport(HeroController.instance.transform.position.x + (Random.value > 0.5f ? 10 : -10), 12.9413f, "First Idle"));
-            };
-            if (!PhaseCheck()) return;
+            }
+            PhaseCheck();
         });
         controlFsm.GetState("DashStab Dash")!.InsertMethod(() =>
         {
