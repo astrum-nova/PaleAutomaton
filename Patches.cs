@@ -58,11 +58,12 @@ public static class Patches
                 tookBellBind = true;
                 CustomBehaviour.bellBindEffect = Object.Instantiate(go, PaleAutomatonPlugin.songKnight.transform, true);
                 Object.Destroy(go);
-                HeroController.instance.transform.Find("Tool Effects").Find("Bell Bind").gameObject.SetActive(false);
                 CustomBehaviour.bellBindEffect.GetComponent<FollowTransform>().enabled = false;
                 CustomBehaviour.bellBindEffect.transform.localScale = new Vector3(1.7f, 1.7f, 1);
                 CustomBehaviour.bellBindEffect.transform.localPosition = Vector3.zero;
                 CustomBehaviour.bellBindEffect.SetActive(false);
+                HeroController.instance.transform.Find("Tool Effects").Find("Bell Bind").gameObject.SetActive(false);
+                HeroController.instance.bellBindFSM.Reset();
             }
         }
     }
