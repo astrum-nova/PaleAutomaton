@@ -94,7 +94,8 @@ public static class Patches
         else if (PaleAutomatonPlugin.controlFsm.ActiveStateName.Contains("Antic") &&
                  PaleAutomatonPlugin.controlFsm.ActiveStateName is not "Dash Slash Antic" &&
                  !PaleAutomatonPlugin.customComboSequence &&
-                 !PaleAutomatonPlugin.PHASE_3) PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.AnticParry());
+                 !PaleAutomatonPlugin.PHASE_3 &&
+                 !Settings.DISABLE_BOSS_PARRYING_YOU) PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.AnticParry());
     }
     [HarmonyPrefix]
     [HarmonyPatch(typeof(DamageHero), nameof(DamageHero.NailClash))]

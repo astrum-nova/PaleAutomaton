@@ -35,12 +35,12 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static DamageHero damageHero = null!;
     
     //* Flags
-    public const int INITIAL_HP = 40;
-    public const int PHASE_2_THRESHOLD = 30;
+    public const int INITIAL_HP = 1800;
+    public const int PHASE_2_THRESHOLD = 1600;
     public static bool PHASE_2;
-    public const int PHASE_3_THRESHOLD = 20;
+    public const int PHASE_3_THRESHOLD = 1000;
     public static bool PHASE_3;
-    public const int PHASE_4_THRESHOLD = 10;
+    public const int PHASE_4_THRESHOLD = 500;
     public static bool PHASE_4;
     public static bool bossScene;
     public static bool windslashGround;
@@ -272,7 +272,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         controlFsm.GetState("Enc Wake")!.AddMethod(() =>
         {
             Instance.StartCoroutine(DisplayBigTitle());
-            Instance.StartCoroutine(FancyZoomOut(2, 0.675f));
+            if (!Settings.DISABLE_CAMERA_ZOOMOUT) Instance.StartCoroutine(FancyZoomOut(2, 0.675f));
             controlFsm.GetState("Battle Start")!.RemoveActionsOfType<DisplayBossTitle>();
             Helpers.SetupArena();
         });

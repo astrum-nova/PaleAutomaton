@@ -223,7 +223,7 @@ public static class CustomBehaviour
     public static IEnumerator Phase3Transition()
     {
         Helpers.DisableChargingEffects();
-        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(100, HeroController.instance.transform.position.y + 100, "First Idle"));
+        PaleAutomatonPlugin.Instance.StartCoroutine(Teleport(100, HeroController.instance.transform.position.y + 500, "First Idle"));
         PaleAutomatonPlugin.controlFsm.Fsm.ManualUpdate = true;
         InfiniteTerrainMover.cameraLockArea.cameraYMax = 15;
         InfiniteTerrainMover.cameraLockArea.enabled = false;
@@ -245,7 +245,7 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.65f, true));yield return null;
         PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.8f));yield return null;
         PaleAutomatonPlugin.Instance.StartCoroutine(GroundSpikeAntic(Object.Instantiate(silkSwishOriginal), 0.85f, true));yield return null;
-        yield return Teleport(100, HeroController.instance.transform.position.y + 100, "First Idle");
+        yield return Teleport(500, HeroController.instance.transform.position.y + 100, "First Idle");
         yield return new WaitForSeconds(0.6f);
         silkSwishOriginal.transform.position = new Vector3(-2f, -4, 1);
         silkSwishOriginal.transform.localScale = new Vector3(5.1726f, 0.6114f, 0.8734f);
@@ -256,7 +256,7 @@ public static class CustomBehaviour
         Helpers.clonedGroundSpikes.SetActive(true);
         groundSpikesCollider.SetActive(true);
         Helpers.clonedGroundSpikesCollider.SetActive(true);
-        PaleAutomatonPlugin.Instance.StartCoroutine(PaleAutomatonPlugin.FancyZoomOut(2, 0.575f));
+        if (!Settings.DISABLE_CAMERA_ZOOMOUT) PaleAutomatonPlugin.Instance.StartCoroutine(PaleAutomatonPlugin.FancyZoomOut(2, 0.575f));
         yield return new WaitForSeconds(0.5f);
         PaleAutomatonPlugin.terrainCollider.transform.position = PaleAutomatonPlugin.terrainCollider.transform.position with {y = -50};
         var otherTerrainCollider = Helpers.clonedTerrainArt.transform.Find("Terrain Collider");
