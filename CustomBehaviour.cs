@@ -136,7 +136,10 @@ public static class CustomBehaviour
         corpse.SetActive(true);
         var corpseFsm = corpse.GetComponent<PlayMakerFSM>();
         corpseFsm.SetState("Land");
-        corpseFsm.GetState("Leave Antic")!.AddMethod(() =>
+        corpseFsm.GetFirstActionOfType<Tk2dPlayAnimationWithEvents>("Leave Antic")!.clipName = "Bow";
+        corpseFsm.GetState("Leave Antic")!.RemoveActionsOfType<AudioPlayRandomVoiceFromTableV2>();
+        corpseFsm.GetState("Leave Antic")!.AddMethod(() => corpse.transform.FlipLocalScale(x:true));
+        corpseFsm.GetState("Leave Jump")!.AddMethod(() =>
         {
             PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect(corpse:true));
             corpse.transform.position = corpse.transform.position with { x = 500 };

@@ -186,5 +186,7 @@ public static class Language_Get_Patch
     {
         if (key == "SONG_KNIGHT_SUPER") __result = "Pale";
         if (key == "SONG_KNIGHT_MAIN") __result = "Automaton";
+        if (key == "SONG_KNIGHT_OUTRO_1") __result = "B-b-bested once again. C-clearly i have much t-t-to learn.<hpage>I could hardly keep up myself, machine.<page>Thank you for our d-d-duel.";
+        if (key == "SONG_KNIGHT_OUTRO_2") __result = "M-may you save us all from the s-s-silken curse, little spider.";
     }
 }
