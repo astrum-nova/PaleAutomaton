@@ -273,17 +273,23 @@ public static class CustomBehaviour
         Helpers.DisableChargingEffects();
         inPhase4Transition = true;
         var hPos = HeroController.instance.transform.position;
-        var yPos = Math.Clamp(hPos.y - 8, 20, 9999);
+        var yPos = Math.Clamp(hPos.y - 8, 20, hPos.y + 9999);
         yield return Teleport(hPos.x, yPos, "Windslash A");
+        PaleAutomatonPlugin.songKnight.transform.Find("Charge Effect").gameObject.SetActive(true);
         PaleAutomatonPlugin.songKnight.transform.localScale = PaleAutomatonPlugin.songKnight.transform.localScale with {x = 1};
         PaleAutomatonPlugin.songKnight.transform.SetRotation2D(90);
-        yield return new WaitForSeconds(0.5f);
+        PaleAutomatonPlugin.controlFsm.Fsm.Stop();
+        yield return new WaitForSeconds(0.8f);
+        PaleAutomatonPlugin.controlFsm.Fsm.Start();
+        PaleAutomatonPlugin.controlFsm.SetState("WindSlash");
+        PaleAutomatonPlugin.songKnight.transform.Find("Charge Effect").gameObject.SetActive(false);
+        yield return new WaitForSeconds(0.1f);
         PaleAutomatonPlugin.groundSpikesParent.SetActive(false);
         GameObject.Find("Main Terrain Art").SetActive(false);
         GameObject.Find("Cloned Terrain Art").SetActive(false);
         yield return new WaitForSeconds(0.2f);
         PaleAutomatonPlugin.songKnight.transform.SetRotation2D(0);
-        yield return Teleport(hPos.x, 100, "First Idle");
+        yield return Teleport(hPos.x, HeroController.instance.transform.position.y + 100, "First Idle");
         inPhase4Transition = false;
         yield return new WaitForSeconds(0.5f);
     }

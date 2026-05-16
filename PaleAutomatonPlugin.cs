@@ -35,16 +35,16 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static DamageHero damageHero = null!;
     
     //* Flags
-    /*
     private const int INITIAL_HP = 1800;
     public const int PHASE_2_THRESHOLD = 1790;
     public const int PHASE_3_THRESHOLD = 1780;
     public const int PHASE_4_THRESHOLD = 1770;
-    */
+    /*
     private const int INITIAL_HP = 1600;
     public const int PHASE_2_THRESHOLD = 1400;
     public const int PHASE_3_THRESHOLD = 800;
     public const int PHASE_4_THRESHOLD = 400;
+    */
     public static bool PHASE_2;
     public static bool PHASE_3;
     public static bool PHASE_4;
