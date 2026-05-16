@@ -131,7 +131,7 @@ public static class CustomBehaviour
             TransitionID = 0
         });
         yield return new WaitForSeconds(0.4f);
-        PaleAutomatonPlugin.songKnight.transform.position = PaleAutomatonPlugin.songKnight.transform.position with { x = 500 };
+        PaleAutomatonPlugin.songKnight.transform.position = PaleAutomatonPlugin.songKnight.transform.position with { x = 500000 };
         var corpse = PaleAutomatonPlugin.songKnight.transform.Find("Corpse Song Knight(Clone)").gameObject;
         corpse.SetActive(true);
         var corpseFsm = corpse.GetComponent<PlayMakerFSM>();
@@ -142,7 +142,7 @@ public static class CustomBehaviour
         corpseFsm.GetState("Leave Jump")!.AddMethod(() =>
         {
             PaleAutomatonPlugin.Instance.StartCoroutine(Helpers.TpEffect(corpse:true));
-            corpse.transform.position = corpse.transform.position with { x = 500 };
+            corpse.transform.position = corpse.transform.position with { x = 500000 };
         });
         corpse.transform.position = new Vector3(50.0426f, 27.0411f, 0.0097f);
     }
