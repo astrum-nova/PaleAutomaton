@@ -6,7 +6,6 @@ using GlobalEnums;
 using HarmonyLib;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
-using InControl;
 using Silksong.AssetHelper.ManagedAssets;
 using Silksong.FsmUtil;
 using UnityEngine;
@@ -49,6 +48,12 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static bool rapidSlashFollowupAllowed;
     public static bool dead;
     
+    public IEnumerator Start()
+    {
+        yield return new WaitForSeconds(2f);
+        Harmony.CreateAndPatchAll(typeof(Language_Get_Patch));
+    }
+    
     private void Awake()
     {
         Logger.LogInfo($"Plugin {Name} ({Id}) has loaded!");
@@ -61,6 +66,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         CustomBehaviour.SK_PROJECTILE_ASSET = ManagedAsset<GameObject>.FromNonSceneAsset("Assets/Prefabs/Hornet Enemies/Song Knight Projectile.prefab", "localpoolprefabs_assets_areahangareasong");
         SceneManager.sceneLoaded += (scene, _) =>
         {
+            if (GameManager.instance == null || !GameManager.instance.IsGameplayScene()) return;
             bossScene = false;
             songKnight = null!;
             controlFsm = null!;
@@ -72,7 +78,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             Patches.tookBellBind = false;
             GameCameras.instance.tk2dCam.ZoomFactor = 1;
             Helpers.ToggleDownSlashHitbox(false);
-            if (!GameManager.instance.IsGameplayScene()) return;
             if (scene.name != "Arborium_11") return;
             PHASE_2 = false;
             PHASE_3 = false;
@@ -221,10 +226,12 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         healthManager.OnDeath += () =>
         {
             dead = true;
+            Helpers.fallKiller.SetActive(false);
             Instance.StopAllCoroutines();
             GameManager.instance.FreezeMoment(FreezeMomentTypes.RaceWinSlow);
             Instance.StartCoroutine(CustomBehaviour.DeathSequence());
         };
+        GameCameras.instance.mainCamera.rect = new Rect(-25, -25, 50, 50);
         SetupPaleAutomaton();
     }
     private static bool PhaseCheck()

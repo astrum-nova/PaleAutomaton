@@ -178,3 +178,13 @@ public static class Patches
         return false;
     }
 }
+[HarmonyPatch(typeof(Language), "Get")]
+[HarmonyPatch([typeof(string), typeof(string)])]
+public static class Language_Get_Patch
+{
+    private static void Postfix(string key, string sheetTitle, ref string __result)
+    {
+        if (key == "SONG_KNIGHT_SUPER") __result = "Pale";
+        if (key == "SONG_KNIGHT_MAIN") __result = "Automaton";
+    }
+}

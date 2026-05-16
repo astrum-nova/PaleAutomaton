@@ -166,6 +166,7 @@ public static class Helpers
         "CameraLockArea (1)",
         "Camera Wind Region",
         "terrain collider",
+        "BossHealthBarCanvas",
         "Boss Scene - To Additive Load(Clone)",
     ];
     private static readonly HashSet<string> arenaBlacklist = [
