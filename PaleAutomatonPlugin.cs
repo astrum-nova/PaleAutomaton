@@ -82,10 +82,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             customComboSequence = false;
             dashToWindslashFollowup = false;
             rapidSlashFollowupAllowed = false;
-            Patches.tookBellBind = false;
             GameCameras.instance.tk2dCam.ZoomFactor = 1;
             Helpers.ToggleDownSlashHitbox(false);
             if (scene.name != "Arborium_11") return;
+            HeroController.instance.transform.Find("Tool Effects").Find("Bell Bind").gameObject.SetActive(false);
             PHASE_2 = false;
             PHASE_3 = false;
             PHASE_4 = false;
@@ -127,6 +127,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         }
         dead = false;
         HeroController.instance.vignette.enabled = false;
+        Patches.tookBellBind = false;
         HeroController.instance.transform.Find("Tool Effects").Find("Bell Bind").gameObject.SetActive(true);
         yield return GROUND_SPIKES.Load();
         groundSpikesSetup = GROUND_SPIKES.InstantiateAsset();

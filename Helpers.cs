@@ -152,7 +152,7 @@ public static class Helpers
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<FloatClamp>("Dash Slash 3")!.maxValue =HeroController.instance.transform.position.x + 1000;
         var saveHeroFsm = PaleAutomatonPlugin.songKnight.LocateMyFSM("Save Hero");
         saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.minValue = HeroController.instance.transform.position.x - 1000;
-        saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.maxValue =HeroController.instance.transform.position.x + 1000;
+        saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.maxValue = HeroController.instance.transform.position.x + 1000;
     }
     private static readonly HashSet<string> arenaWhitelist = [
         "Black Thread States",
@@ -197,7 +197,6 @@ public static class Helpers
         // Hitboxes
         PaleAutomatonPlugin.terrainCollider.transform.localScale = PaleAutomatonPlugin.terrainCollider.transform.localScale with { x = 3f };
         PaleAutomatonPlugin.terrainCollider.transform.position = PaleAutomatonPlugin.terrainCollider.transform.position with { x = -100 };
-        
         CustomBehaviour.groundSpikesCollider = Object.Instantiate(GameObject.Find("Spike Collider"))!;
         CustomBehaviour.groundSpikesCollider.name = "GroundSpikesCollider";
         SetupGroundSpikeHitbox(CustomBehaviour.groundSpikesCollider);
@@ -286,13 +285,13 @@ public static class Helpers
                         var colliderLeft = infiniteTerrainMoverLeft.AddComponent<BoxCollider2D>();
                         colliderLeft.isTrigger = true;
                         infiniteTerrainMoverLeft.transform.localScale = new Vector3(1, 100000, 1);
-                        infiniteTerrainMoverLeft.transform.position = infiniteTerrainMoverLeft.transform.position with { x = 75 };
+                        infiniteTerrainMoverLeft.transform.position = infiniteTerrainMoverLeft.transform.position with { x = 75, y = 49000 };
                         infiniteTerrainMoverLeft.transform.SetParent(gameObject.transform);
                         var infiniteTerrainMoverRight = new GameObject("Infinite Terrain Mover Right");
                         var colliderRight = infiniteTerrainMoverRight.AddComponent<BoxCollider2D>();
                         colliderRight.isTrigger = true;
                         infiniteTerrainMoverRight.transform.localScale = new Vector3(1, 100000, 1);
-                        infiniteTerrainMoverRight.transform.position = infiniteTerrainMoverRight.transform.position with { x = 185 };
+                        infiniteTerrainMoverRight.transform.position = infiniteTerrainMoverRight.transform.position with { x = 185, y = 49000 };
                         infiniteTerrainMoverRight.transform.SetParent(gameObject.transform);
                         var itmLeft = infiniteTerrainMoverLeft.AddComponent<InfiniteTerrainMover>();
                         var itmRight = infiniteTerrainMoverRight.AddComponent<InfiniteTerrainMover>();
@@ -382,10 +381,7 @@ public static class Helpers
                                  ]) blackThreadWorld.GetChild(objIndex).gameObject.SetActive(false);
                         break;
                     case "GameObject (11)":
-                        for (var i = 0; i < gameObject.transform.childCount; i++)
-                        {
-                            if (gameObject.transform.GetChild(i).gameObject.name.StartsWith("deepnest_stalactites_bg_simple_wall") || gameObject.transform.GetChild(i).gameObject.name == "sc_outer_bg_towers_0010_1_bg_outer_wall (2)") gameObject.transform.GetChild(i).gameObject.SetActive(false);
-                        }
+                        for (var i = 0; i < gameObject.transform.childCount; i++) if (gameObject.transform.GetChild(i).gameObject.name.StartsWith("deepnest_stalactites_bg_simple_wall") || gameObject.transform.GetChild(i).gameObject.name == "sc_outer_bg_towers_0010_1_bg_outer_wall (2)") gameObject.transform.GetChild(i).gameObject.SetActive(false);
                         break;
                 }
                 continue;

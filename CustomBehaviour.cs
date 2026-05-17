@@ -479,7 +479,7 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0f, 0.4f));
         PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 7, hcPos.y + 7, 0.05f, 0.45f, true));
         PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 7, hcPos.y - 7, 0.1f, 0.5f, true));
-        yield return Teleport(hcPos.x, hcPos.y + 100, "First Idle", delay:0f, finishNextStateIn: 0f);
+        yield return Teleport(hcPos.x, hcPos.y + 500, "First Idle", delay:0f, finishNextStateIn: 0f);
         yield return new WaitForSeconds(0.8f);
         hcPos = HeroController.instance.transform.position;
         yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.2f);
@@ -491,7 +491,7 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x, hcPos.y, 0f, 0.4f));
         PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x + 7, hcPos.y + 7, 0.05f, 0.45f, true));
         PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(hcPos.x - 7, hcPos.y - 7, 0.1f, 0.5f, true));
-        yield return Teleport(hcPos.x, hcPos.y + 100, "First Idle", delay:0f, finishNextStateIn: 0f);
+        yield return Teleport(hcPos.x, hcPos.y + 500, "First Idle", delay:0f, finishNextStateIn: 0f);
         yield return new WaitForSeconds(0.8f);
         hcPos = HeroController.instance.transform.position;
         yield return Teleport(hcPos.x + 8.5f * -direction, hcPos.y + 5, "Dive Dir", finishNextStateIn: 0.2f);
