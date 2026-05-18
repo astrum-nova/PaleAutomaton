@@ -25,6 +25,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     private static ManagedAsset<GameObject> SK_ASSET = null!;
     private static ManagedAsset<GameObject> BIG_TITLE = null!;
     private static ManagedAsset<GameObject> GROUND_SPIKES = null!;
+    public static ManagedAsset<GameObject> BELL_BIND_EFFECT = null!;
     private static GameObject songKnightBossScene = null!;
     public static GameObject songKnight = null!;
     private static GameObject groundSpikesSetup = null!;
@@ -35,16 +36,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     public static DamageHero damageHero = null!;
     
     //* Flags
-    private const int INITIAL_HP = 40;
-    public const int PHASE_2_THRESHOLD = 30;
-    public const int PHASE_3_THRESHOLD = 20;
-    public const int PHASE_4_THRESHOLD = 10;
-    /*
-    private const int INITIAL_HP = 1800;
-    public const int PHASE_2_THRESHOLD = 1600;
-    public const int PHASE_3_THRESHOLD = 1000;
-    public const int PHASE_4_THRESHOLD = 500;
-    */
+    private static int INITIAL_HP = 1800;
+    public static int PHASE_2_THRESHOLD = 1600;
+    public static int PHASE_3_THRESHOLD = 1000;
+    public static int PHASE_4_THRESHOLD = 500;
     public static bool PHASE_2;
     public static bool PHASE_3;
     public static bool PHASE_4;
@@ -66,14 +61,23 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Logger.LogInfo($"Plugin {Name} ({Id}) has loaded!");
         Instance = this;
         Settings.InitializeSettings(Config);
+        if (Settings.DEBUG_MODE)
+        {
+            INITIAL_HP = Settings.INITIAL_HP;
+            PHASE_2_THRESHOLD = Settings.PHASE_2_THRESHOLD;
+            PHASE_3_THRESHOLD = Settings.PHASE_3_THRESHOLD;
+            PHASE_4_THRESHOLD = Settings.PHASE_4_THRESHOLD;
+        }
         Harmony.CreateAndPatchAll(typeof(Patches));
         SK_ASSET = ManagedAsset<GameObject>.FromSceneAsset("hang_17b", "Boss Scene - To Additive Load");
         BIG_TITLE = ManagedAsset<GameObject>.FromSceneAsset("cradle_03", "Boss Scene/Boss Title");
         GROUND_SPIKES = ManagedAsset<GameObject>.FromSceneAsset("song_24", "sc_wall_spiked");
+        BELL_BIND_EFFECT = ManagedAsset<GameObject>.FromNonSceneAsset("Assets/Prefabs/Heroes/bind_bell_appear.prefab", "localpoolprefabs_assets_shared");
         CustomBehaviour.SK_PROJECTILE_ASSET = ManagedAsset<GameObject>.FromNonSceneAsset("Assets/Prefabs/Hornet Enemies/Song Knight Projectile.prefab", "localpoolprefabs_assets_areahangareasong");
         SceneManager.sceneLoaded += (scene, _) =>
         {
             if (GameManager.instance == null || !GameManager.instance.IsGameplayScene()) return;
+            CustomBehaviour.bellBindEffect = null!;
             bossScene = false;
             songKnight = null!;
             controlFsm = null!;
@@ -85,7 +89,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             GameCameras.instance.tk2dCam.ZoomFactor = 1;
             Helpers.ToggleDownSlashHitbox(false);
             if (scene.name != "Arborium_11") return;
-            HeroController.instance.transform.Find("Tool Effects").Find("Bell Bind").gameObject.SetActive(false);
             PHASE_2 = false;
             PHASE_3 = false;
             PHASE_4 = false;
@@ -120,15 +123,10 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     {
         yield return new WaitForSeconds(0.3475f);
         HeroController.instance.transform.position = new Vector3(dead ? 44 : 46.8476f, 25.5938f, 0.004f);
-        if (dead)
-        {
-            Instance.StartCoroutine(CustomBehaviour.LieDown());
-            foreach (var tk2dsprite in songKnight.GetComponentsInChildren<tk2dSprite>(true)) tk2dsprite.renderLayer = 0;
-        }
+        foreach (var tk2dsprite in songKnight.GetComponentsInChildren<tk2dSprite>(true)) tk2dsprite.renderLayer = dead ? 0 : 500;
+        if (dead) Instance.StartCoroutine(CustomBehaviour.LieDown());
         dead = false;
         HeroController.instance.vignette.enabled = false;
-        Patches.tookBellBind = false;
-        HeroController.instance.transform.Find("Tool Effects").Find("Bell Bind").gameObject.SetActive(true);
         yield return GROUND_SPIKES.Load();
         groundSpikesSetup = GROUND_SPIKES.InstantiateAsset();
         groundSpikesSetup.transform.position = new Vector3(1000, 1000, 0);
@@ -233,6 +231,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         Destroy(CustomBehaviour.tpEffectSetup.transform.Find("Strike R").gameObject);
         healthManager.OnDeath += () =>
         {
+            if (CustomBehaviour.teleporting) songKnight.transform.position = new Vector3(HeroController.instance.transform.position.x + 4, HeroController.instance.transform.position.y, songKnight.transform.position.z);
             dead = true;
             Helpers.fallKiller.SetActive(false);
             Instance.StopAllCoroutines();
@@ -246,24 +245,22 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     }
     private static void PhaseCheck()
     {
-        switch (healthManager.hp)
+        if (healthManager.hp <= PHASE_2_THRESHOLD && !PHASE_2)
         {
-            case <= PHASE_2_THRESHOLD when !PHASE_2:
-                PHASE_2 = true;
-                Instance.StartCoroutine(CustomBehaviour.Phase2Transition());
-                SetupPhase2();
-                return;
-            case <= PHASE_3_THRESHOLD when !PHASE_3 && CustomBehaviour.crossSlashSetup:
-            {
-                PHASE_3 = true;
-                Helpers.constrainPosition.enabled = false;
-                Instance.StartCoroutine(CustomBehaviour.Phase3Transition());
-                SetupPhase3();
-                var hitbox = songKnight.transform.Find("Dive Hit").gameObject;
-                hitbox.GetComponent<PolygonCollider2D>().SetPath(0, songKnight.transform.Find("ComboSlash 1").gameObject.GetComponent<PolygonCollider2D>().points);
-                hitbox.transform.localScale = new Vector3(1, 2, 1);
-                return;
-            }
+            PHASE_2 = true;
+            Instance.StartCoroutine(CustomBehaviour.Phase2Transition());
+            SetupPhase2();
+            return;
+        }
+        if (healthManager.hp <= PHASE_3_THRESHOLD && (!PHASE_3 && CustomBehaviour.crossSlashSetup))
+        {
+            PHASE_3 = true;
+            Helpers.constrainPosition.enabled = false;
+            Instance.StartCoroutine(CustomBehaviour.Phase3Transition());
+            SetupPhase3();
+            var hitbox = songKnight.transform.Find("Dive Hit").gameObject;
+            hitbox.GetComponent<PolygonCollider2D>().SetPath(0, songKnight.transform.Find("ComboSlash 1").gameObject.GetComponent<PolygonCollider2D>().points);
+            hitbox.transform.localScale = new Vector3(1, 2, 1);
         }
     }
     private static void SetupPaleAutomaton()

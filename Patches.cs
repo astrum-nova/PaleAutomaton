@@ -50,23 +50,8 @@ public static class Patches
         {
             PaleAutomatonPlugin.Instance.StartCoroutine(CustomBehaviour.SpawnWindSlash());
             Object.Destroy(go);
-        } else if (go.name.StartsWith("bind_bell_appear"))
-        {
-            if (!tookBellBind)
-            {
-                tookBellBind = true;
-                CustomBehaviour.bellBindEffect = Object.Instantiate(go, PaleAutomatonPlugin.songKnight.transform, true);
-                Object.Destroy(go);
-                CustomBehaviour.bellBindEffect.GetComponent<FollowTransform>().enabled = false;
-                CustomBehaviour.bellBindEffect.transform.localScale = new Vector3(1.7f, 1.7f, 1);
-                CustomBehaviour.bellBindEffect.transform.localPosition = Vector3.zero;
-                CustomBehaviour.bellBindEffect.SetActive(false);
-                HeroController.instance.transform.Find("Tool Effects").Find("Bell Bind").gameObject.SetActive(false);
-                HeroController.instance.bellBindFSM.Reset();
-            }
         }
     }
-    public static bool tookBellBind;
     [HarmonyPrefix]
     [HarmonyPatch(typeof(GameManager), nameof(GameManager.FreezeMoment), typeof(FreezeMomentTypes), typeof(Action))]
     private static bool GameManager_FreezeMoment(GameManager __instance, FreezeMomentTypes type, Action onFinish)

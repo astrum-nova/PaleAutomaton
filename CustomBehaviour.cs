@@ -21,6 +21,7 @@ public static class CustomBehaviour
     public static GameObject groundSpikesCollider = null!;
     public static GameObject bellBindEffect = null!;
     public static Rigidbody2D rb = null!;
+    public static bool teleporting;
     public static bool csSpam;
     public static bool inPhase4Transition;
     private static readonly List<int> attackMemory = [3, 4, 5];
@@ -161,6 +162,7 @@ public static class CustomBehaviour
     }
     public static IEnumerator Teleport(float x, float y, string nextState, float delay = 0.2f, float finishNextStateIn = -1, bool lookAtHornet = false)
     {
+        teleporting = true;
         rb.linearVelocityY = 0;
         rb.linearVelocityX = 0;
         PaleAutomatonPlugin.controlFsm.Fsm.manualUpdate = true;
@@ -182,6 +184,7 @@ public static class CustomBehaviour
             PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");
         }
         Helpers.DisableChargingEffects();
+        teleporting = false;
     }
     //! PHASE TRANSITIONS
     public static IEnumerator Phase2Transition()
@@ -268,7 +271,16 @@ public static class CustomBehaviour
         InfiniteTerrainMover.cameraLockArea.enabled = true;
         InfiniteTerrainMover.cameraLockArea.OnInsideStateChanged(true);
         if (Settings.CUSTOM_POGO_HITBOX) Helpers.ToggleDownSlashHitbox(true);
-        bellBindEffect.SetActive(true);
+        if (Settings.BELL_BIND_EFFECT_ON_THE_BOSS)
+        {
+            yield return PaleAutomatonPlugin.BELL_BIND_EFFECT.Load();
+            bellBindEffect = PaleAutomatonPlugin.BELL_BIND_EFFECT.InstantiateAsset();
+            bellBindEffect.transform.SetParent(PaleAutomatonPlugin.songKnight.transform);
+            bellBindEffect.GetComponent<FollowTransform>().enabled = false;
+            bellBindEffect.transform.localScale = new Vector3(1.7f, 1.7f, 1);
+            bellBindEffect.transform.localPosition = Vector3.zero;
+            bellBindEffect.SetActive(true);
+        }
         PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
     }
     private static IEnumerator Phase4Transition()
@@ -569,14 +581,14 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.controlFsm.SetState("CrossSlash 1");
         yield return new WaitForSeconds(0.1f);
         hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 4 * -direction, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.4f);
+        yield return Teleport(hcPos.x + 4 * -direction, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.1f);
         yield return new WaitForSeconds(0.5f);
         PaleAutomatonPlugin.controlFsm.SetState("CrossSlash 1");
         yield return new WaitForSeconds(0.1f);
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.speed = 0;
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 90;
         hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.4f);
+        yield return Teleport(hcPos.x, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.1f);
         yield return new WaitForSeconds(0.5f);
         PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
         yield return new WaitForSeconds(0.2f);
