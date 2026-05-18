@@ -398,8 +398,8 @@ public static class CustomBehaviour
     public static IEnumerator CrossSlashStarter()
     {
         PaleAutomatonPlugin.customComboSequence = true;
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(PaleAutomatonPlugin.songKnight.transform.localScale.x * -7 + PaleAutomatonPlugin.songKnight.transform.position.x, PaleAutomatonPlugin.songKnight.transform.position.y - 2, 0.05f, 0.15f, scaleMultiplier: 0.7f, csStarter:true));
-        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(PaleAutomatonPlugin.songKnight.transform.localScale.x * -13 + PaleAutomatonPlugin.songKnight.transform.position.x, PaleAutomatonPlugin.songKnight.transform.position.y - 3, 0.1f, 0.3f, scaleMultiplier: 0.4f, csStarter:true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(PaleAutomatonPlugin.songKnight.transform.localScale.x * -9 + PaleAutomatonPlugin.songKnight.transform.position.x, PaleAutomatonPlugin.songKnight.transform.position.y - 2, 0.05f, 0.15f, scaleMultiplier: 0.7f, csStarter:true));
+        PaleAutomatonPlugin.Instance.StartCoroutine(SpawnCrossSlash(PaleAutomatonPlugin.songKnight.transform.localScale.x * -15 + PaleAutomatonPlugin.songKnight.transform.position.x, PaleAutomatonPlugin.songKnight.transform.position.y - 3, 0.1f, 0.3f, scaleMultiplier: 0.4f, csStarter:true));
         yield return new WaitForSeconds(0.1f);
         PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
         yield return new WaitForSeconds(0.3f);
