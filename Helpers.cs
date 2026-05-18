@@ -160,6 +160,8 @@ public static class Helpers
         "song_city_default (1)",
         "GameObject (11)",
         "wind_tiled_set",
+        "Hero Corpse Marker (10)",
+        "Hornet Cocoon Corpse(Clone)",
         "BlurPlane",
         "Spike Collider",
         "CameraLockArea (1)",
@@ -230,6 +232,10 @@ public static class Helpers
                         gameObject.transform.Find("plane (1)").localScale *= 200;
                         gameObject.transform.Find("plane (2)").localScale *= 200;
                         gameObject.transform.Find("plane (3)").localScale *= 200;
+                        gameObject.transform.Find("plane").localScale = gameObject.transform.Find("plane").localScale with { y = gameObject.transform.Find("plane").localScale.y * 500 };
+                        gameObject.transform.Find("plane (1)").localScale = gameObject.transform.Find("plane (1)").localScale with { y = gameObject.transform.Find("plane (1)").localScale.y * 500 };
+                        gameObject.transform.Find("plane (2)").localScale = gameObject.transform.Find("plane (2)").localScale with { y = gameObject.transform.Find("plane (2)").localScale.y * 500 };
+                        gameObject.transform.Find("plane (3)").localScale = gameObject.transform.Find("plane (3)").localScale with { y = gameObject.transform.Find("plane (3)").localScale.y * 500 };
                         break;
                     case "strut_bg_song_bridge_example":
                         foreach (var objName in (string[])[

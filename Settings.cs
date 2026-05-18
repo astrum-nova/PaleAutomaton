@@ -47,14 +47,12 @@ public static class Settings
             false,
             "Enables a scrapped effect for phase 3 and 4 where the boss gains the bell bind visual effect, it looked weird so i scrapepd it."
         ).Value;
-        /*
         DISABLE_BOSS_PARRYING_YOU = Config.Bind(
             "Gameplay",
             "Disable Boss Parrying You",
             false,
             "Disables the mechanic where the boss can parry you if you attack during a telegraph."
         ).Value;
-        */
         DEBUG_MODE = Config.Bind(
             "Debug",
             "Debug Mode",

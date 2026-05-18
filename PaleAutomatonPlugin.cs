@@ -38,8 +38,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     //* Flags
     private static int INITIAL_HP = 1800;
     public static int PHASE_2_THRESHOLD = 1600;
-    public static int PHASE_3_THRESHOLD = 1000;
-    public static int PHASE_4_THRESHOLD = 500;
+    public static int PHASE_3_THRESHOLD = 800;
+    public static int PHASE_4_THRESHOLD = 400;
     public static bool PHASE_2;
     public static bool PHASE_3;
     public static bool PHASE_4;
@@ -123,8 +123,8 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
     {
         yield return new WaitForSeconds(0.3475f);
         HeroController.instance.transform.position = new Vector3(dead ? 44 : 46.8476f, 25.5938f, 0.004f);
-        foreach (var tk2dsprite in songKnight.GetComponentsInChildren<tk2dSprite>(true)) tk2dsprite.renderLayer = dead ? 0 : 500;
         if (dead) Instance.StartCoroutine(CustomBehaviour.LieDown());
+        else foreach (var tk2dsprite in songKnight.GetComponentsInChildren<tk2dSprite>(true)) tk2dsprite.SortingOrder = 500;
         dead = false;
         HeroController.instance.vignette.enabled = false;
         yield return GROUND_SPIKES.Load();

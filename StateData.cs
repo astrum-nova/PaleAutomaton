@@ -2,6 +2,7 @@
 
 namespace PaleAutomaton;
 
+// In retrospect this class was useless lol i thought i would need a bunch of these state checks, too lazy to refactor now
 public static class StateData
 {
     private static readonly HashSet<string> parryableStates =
