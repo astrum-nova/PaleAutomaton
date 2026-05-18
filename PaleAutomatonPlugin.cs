@@ -238,9 +238,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             GameManager.instance.FreezeMoment(FreezeMomentTypes.RaceWinSlow);
             Instance.StartCoroutine(CustomBehaviour.DeathSequence());
         };
-        var meshRenderer = songKnight.GetComponent<MeshRenderer>();
-        meshRenderer.forceRenderingOff = false; 
-        meshRenderer.bounds = new Bounds(Vector3.zero, new Vector3(1000f, 1000f, 1000f));
         SetupPaleAutomaton();
     }
     private static void PhaseCheck()

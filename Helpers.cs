@@ -8,6 +8,7 @@ using HutongGames.PlayMaker.Actions;
 using Silksong.FsmUtil;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Bounds = UnityEngine.Bounds;
 using Object = UnityEngine.Object;
 
 namespace PaleAutomaton;
@@ -153,6 +154,9 @@ public static class Helpers
         var saveHeroFsm = PaleAutomatonPlugin.songKnight.LocateMyFSM("Save Hero");
         saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.minValue = HeroController.instance.transform.position.x - 1000;
         saveHeroFsm.GetFirstActionOfType<FloatClamp>("State 2")!.maxValue = HeroController.instance.transform.position.x + 1000;
+        var meshRenderer = PaleAutomatonPlugin.songKnight.GetComponent<MeshRenderer>();
+        meshRenderer.forceRenderingOff = false;
+        meshRenderer.bounds = new Bounds(HeroController.instance.transform.position, new Vector3(1000f, 1000f, 1000f));
     }
     private static readonly HashSet<string> arenaWhitelist = [
         "Black Thread States",
