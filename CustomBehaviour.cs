@@ -195,7 +195,7 @@ public static class CustomBehaviour
         {
             spawnPoint = new FsmOwnerDefault { gameObject = PaleAutomatonPlugin.songKnight, GameObject = PaleAutomatonPlugin.songKnight },
             delay = 0f,
-            stunHero = true,
+            stunHero = false,
             roarBurst = false,
             isSmall = false,
             noVisualEffect = false,
