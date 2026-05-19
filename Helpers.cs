@@ -15,6 +15,9 @@ namespace PaleAutomaton;
 
 public static class Helpers
 {
+    private static readonly WaitForSeconds _waitForSeconds0_15 = new(0.15f);
+    private static readonly WaitForSeconds _waitForSeconds1 = new(1);
+
     public static void MakeProjectileIgnoreEnvironment(GameObject projectile)
     {
         var colliders = projectile.GetComponentsInChildren<Collider2D>(true);
@@ -87,12 +90,12 @@ public static class Helpers
         tpEffect.transform.position = !corpse ? PaleAutomatonPlugin.songKnight.transform.position : PaleAutomatonPlugin.songKnight.transform.Find("Corpse Song Knight(Clone)").transform.position;
         tpEffect.SetActive(true);
         PaleAutomatonPlugin.healthManager.SpriteFlash.flashArmoured();
-        yield return new WaitForSeconds(1);
+        yield return _waitForSeconds1;
         tpEffect.SetActive(false);
     }
     public static IEnumerator DiveTurnaround()
     {
-        yield return new WaitForSeconds(0.15f);
+        yield return _waitForSeconds0_15;
         if (PaleAutomatonPlugin.songKnight.transform.localScale.x > 0)
         {
             if (PaleAutomatonPlugin.songKnight.transform.position.x < HeroController.instance.transform.position.x) PaleAutomatonPlugin.songKnight.transform.FlipLocalScale(x: true);
