@@ -78,6 +78,7 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         {
             if (GameManager.instance == null || !GameManager.instance.IsGameplayScene()) return;
             CustomBehaviour.bellBindEffect = null!;
+            CustomBehaviour.inPhase4Transition = false;
             bossScene = false;
             songKnight = null!;
             controlFsm = null!;
