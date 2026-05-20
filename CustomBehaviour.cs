@@ -470,7 +470,7 @@ public static class CustomBehaviour
             do attack = Random.Range(1, 6); while (attackMemory.Contains(attack));
             attackMemory.RemoveAt(0);
             attackMemory.Add(attack);
-            yield return 5 switch
+            yield return attack switch
             {
                 1 => WindSlashSpam(),
                 2 => LiterallyBoundlessInfinity(),
