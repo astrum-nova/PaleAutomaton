@@ -96,6 +96,7 @@ public static class Patches
     {
         if (!PaleAutomatonPlugin.bossScene) return;
         if (HeroController.instance.cState.downAttacking) HeroController.instance.DownspikeBounce(false);
+        if (PaleAutomatonPlugin.PHASE_3 && __instance.gameObject.name == "Rising Slash") HeroController.instance.StartInvulnerable(0.15f);
         HeroController.instance.AddSilkParts(1, false);
         PaleAutomatonPlugin.healthManager.SpriteFlash.flashArmoured();
         var damage = PlayerData.instance.nailDamage / 2;

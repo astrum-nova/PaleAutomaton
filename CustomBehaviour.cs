@@ -40,6 +40,7 @@ public static class CustomBehaviour
     public static Rigidbody2D rb = null!;
     public static bool teleporting;
     public static bool csSpam;
+    public static bool thirdRisingSlash;
     public static bool inPhase4Transition;
     private static readonly List<int> attackMemory = [3, 4, 5];
     private static string parriedState = "";
@@ -298,6 +299,7 @@ public static class CustomBehaviour
             bellBindEffect.transform.localPosition = Vector3.zero;
             bellBindEffect.SetActive(true);
         }
+        PaleAutomatonPlugin.songKnight.transform.Find("Rising Slash").transform.localScale = new Vector3(1, 1f, 1);
         PaleAutomatonPlugin.Instance.StartCoroutine(SelectPhase3Attack());
     }
     private static IEnumerator Phase4Transition()
@@ -468,7 +470,7 @@ public static class CustomBehaviour
             do attack = Random.Range(1, 6); while (attackMemory.Contains(attack));
             attackMemory.RemoveAt(0);
             attackMemory.Add(attack);
-            yield return attack switch
+            yield return 5 switch
             {
                 1 => WindSlashSpam(),
                 2 => LiterallyBoundlessInfinity(),
@@ -590,10 +592,11 @@ public static class CustomBehaviour
     }
     private static IEnumerator TripleRisingSlash()
     {
+        thirdRisingSlash = false;
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 40;
         var direction = Random.value > 0.5f ? -1 : 1;
         var hcPos = HeroController.instance.transform.position;
-        yield return Teleport(hcPos.x + 4 * direction, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.4f);
+        yield return Teleport(hcPos.x + 4 * direction, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.5f);
         yield return _waitForSeconds0_5;
         PaleAutomatonPlugin.controlFsm.SetState("CrossSlash 1");
         yield return _waitForSeconds0_1;
@@ -606,7 +609,9 @@ public static class CustomBehaviour
         PaleAutomatonPlugin.controlFsm.GetFirstActionOfType<SetVelocityByScale>("Rising Slash")!.ySpeed = 90;
         hcPos = HeroController.instance.transform.position;
         yield return Teleport(hcPos.x, hcPos.y - 6, "Rising Slash Antic", finishNextStateIn: 0.1f);
-        yield return _waitForSeconds0_5;
+        yield return _waitForSeconds0_2;
+        thirdRisingSlash = true;
+        yield return _waitForSeconds0_3;
         PaleAutomatonPlugin.controlFsm.SetState("Windslash A");
         yield return _waitForSeconds0_2;
         PaleAutomatonPlugin.controlFsm.SendEvent("FINISHED");

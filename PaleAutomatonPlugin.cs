@@ -77,8 +77,6 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
         SceneManager.sceneLoaded += (scene, _) =>
         {
             if (GameManager.instance == null || !GameManager.instance.IsGameplayScene()) return;
-            CustomBehaviour.bellBindEffect = null!;
-            CustomBehaviour.inPhase4Transition = false;
             bossScene = false;
             songKnight = null!;
             controlFsm = null!;
@@ -87,6 +85,9 @@ public partial class PaleAutomatonPlugin : BaseUnityPlugin
             customComboSequence = false;
             dashToWindslashFollowup = false;
             rapidSlashFollowupAllowed = false;
+            CustomBehaviour.bellBindEffect = null!;
+            CustomBehaviour.thirdRisingSlash = false;
+            CustomBehaviour.inPhase4Transition = false;
             GameCameras.instance.tk2dCam.ZoomFactor = 1;
             Helpers.ToggleDownSlashHitbox(false);
             if (scene.name != "Arborium_11") return;
